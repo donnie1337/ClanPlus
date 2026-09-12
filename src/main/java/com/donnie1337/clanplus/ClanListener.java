@@ -51,7 +51,7 @@ public final class ClanListener implements Listener {
         if (title.equals("ᴄʟᴀɴ")) {
             switch (e.getRawSlot()) {
                 case 11 -> { if (plugin.clans().byPlayer(p.getUniqueId()) == null) openCreateGui(p); else { p.closeInventory(); p.performCommand("clan menu"); } }
-                case 12 -> new ClanGui(plugin).openInvites(p);
+                case 13 -> new ClanGui(plugin).openInvites(p);
                 case 14 -> new ClanGui(plugin).openTop(p);
                 case 16 -> new ClanGui(plugin).openAll(p);
                 case 22 -> new ClanGui(plugin).openKdr(p);
