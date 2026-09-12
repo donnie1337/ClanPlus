@@ -50,7 +50,7 @@ public final class ClanListener implements Listener {
 
         if (title.equals("ᴄʟᴀɴ")) {
             switch (e.getRawSlot()) {
-                case 11 -> { if (plugin.clans().byPlayer(p.getUniqueId()) == null) openCreateGui(p); else { p.closeInventory(); p.performCommand("clan menu"); } }
+                case 11 -> { if (plugin.clans().byPlayer(p.getUniqueId()) == null) startCreation(p); else { p.closeInventory(); p.performCommand("clan menu"); } }
                 case 13 -> new ClanGui(plugin).openInvites(p);
                 case 14 -> new ClanGui(plugin).openTop(p);
                 case 16 -> new ClanGui(plugin).openAll(p);
@@ -58,12 +58,6 @@ public final class ClanListener implements Listener {
                 case 26 -> p.closeInventory();
                 default -> { }
             }
-            return;
-        }
-
-        if (title.equals("Criar clan")) {
-            if (e.getRawSlot() == 13) { p.closeInventory(); startCreation(p); }
-            else if (e.getRawSlot() == 22) p.closeInventory();
             return;
         }
 
@@ -147,25 +141,16 @@ public final class ClanListener implements Listener {
     }
 
     private boolean isClanGui(String title) {
-        return title.equals("ᴄʟᴀɴ") || title.equals("Criar clan") || title.equals("Convites recebidos") ||
+        return title.equals("ᴄʟᴀɴ") || title.equals("Convites recebidos") ||
                 title.equals("Clans mais top") || title.equals("Clans do servidor") || title.equals("Ranking de KDR") ||
                 title.equals("Membros da clan") || title.equals("Excluir clan") || title.startsWith("Clan de ") ||
                 title.equals("Configuração da clan");
     }
 
-    private void openCreateGui(Player p) {
-        Inventory inv = Bukkit.createInventory(null, 27, "§8Criar clan");
-        ItemStack paper = new ItemStack(Material.PAPER); ItemMeta meta = paper.getItemMeta();
-        meta.setDisplayName(ChatColor.GREEN + "Criar Clan");
-        meta.setLore(java.util.List.of(ChatColor.GRAY + "Clique para iniciar a criação.", "", ChatColor.YELLOW + "Você irá digitar o nome", ChatColor.YELLOW + "e depois a tag pelo chat."));
-        paper.setItemMeta(meta); inv.setItem(13, paper);
-        ItemStack back = new ItemStack(Material.ARROW); ItemMeta backMeta = back.getItemMeta(); backMeta.setDisplayName(ChatColor.GRAY + "Voltar"); back.setItemMeta(backMeta); inv.setItem(22, back);
-        p.openInventory(inv);
-    }
-
     private void startCreation(Player p) {
         if (!LoginPlusHook.requireAuthentication(plugin, p)) return;
         if (plugin.clans().byPlayer(p.getUniqueId()) != null) { p.sendMessage(plugin.msg("already-clan")); return; }
+        p.closeInventory();
         createSteps.put(p.getUniqueId(), CreateStep.NAME); createNames.remove(p.getUniqueId());
         p.sendMessage(plugin.raw("prefix") + ChatColor.YELLOW + "Digite no chat o " + ChatColor.WHITE + "nome da clan" + ChatColor.YELLOW + "."); sendCancelButton(p);
     }
