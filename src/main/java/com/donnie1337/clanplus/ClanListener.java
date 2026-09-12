@@ -152,6 +152,7 @@ public final class ClanListener implements Listener {
         TextComponent component = new TextComponent(ChatColor.GRAY + "Clique " + ChatColor.RED + "AQUI" + ChatColor.GRAY + " para cancelar");
         component.setClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, "/trigger clanplus_cancel"));
         p.spigot().sendMessage(component);
+        p.sendMessage("");
     }
 
     @EventHandler
