@@ -12,7 +12,6 @@ import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Locale;
@@ -29,6 +28,9 @@ public final class ClanCommand implements CommandExecutor, TabCompleter {
     private void send(CommandSender s, String key, String... r) { s.sendMessage(plugin.msg(key, r)); }
     private String title(String s) { return ChatColor.translateAlternateColorCodes('&', s); }
     private ItemStack item(Material m, String name, String... lore) { ItemStack i = new ItemStack(m); ItemMeta meta = i.getItemMeta(); meta.setDisplayName(title(name)); if (lore.length > 0) meta.setLore(Arrays.stream(lore).map(this::title).toList()); i.setItemMeta(meta); return i; }
+
+    private String stripTagColors(String tag) { return tag.replaceAll("&[0-9a-fA-F]", ""); }
+    private boolean validTag(String tag) { return tag != null && tag.matches("(?:&[0-9a-fA-F])*[A-Z](?:&[0-9a-fA-F])*[A-Z](?:&[0-9a-fA-F])*[A-Z]"); }
 
     @Override public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
         Player p = player(sender); if (p == null) return true;
@@ -61,17 +63,16 @@ public final class ClanCommand implements CommandExecutor, TabCompleter {
         return true;
     }
 
-    private void panel(Player p) { new ClanGui(plugin).openMain(p); }
     private void create(Player p, String[] a) {
         if (clan(p) != null) { send(p, "already-clan"); return; }
-        if (a.length < 2) { send(p, "usage-create"); return; }
+        if (a.length < 3) { send(p, "usage-create"); return; }
         String name = a[1];
-        String tag = a.length > 2 ? a[2] : "";
+        String tag = a[2];
         int min = plugin.getConfig().getInt("clan.name-min-length", 3), max = plugin.getConfig().getInt("clan.name-max-length", 16);
         if (!name.matches("[A-Za-z0-9_\\-]+") || name.length() < min || name.length() > max) { p.sendMessage(title("&cNome inválido. Use " + min + "-" + max + " caracteres, letras, números, _ ou - .")); return; }
-        if (!tag.matches("[A-Z]{3}")) { p.sendMessage(plugin.msg("invalid-tag")); return; }
+        if (!validTag(tag) || stripTagColors(tag).length() != 3) { p.sendMessage(plugin.msg("invalid-tag")); return; }
         if (plugin.clans().nameTaken(name)) { p.sendMessage(title("&cJá existe uma clan com esse nome.")); return; }
-        if (plugin.clans().tagTaken(tag)) { p.sendMessage(title("&cEssa tag já está sendo usada.")); return; }
+        if (plugin.clans().tagTaken(stripTagColors(tag))) { p.sendMessage(title("&cEssa tag já está sendo usada.")); return; }
         Clan c = plugin.clans().create(name, tag, p.getUniqueId()); send(p, "created", "%name%", c.name(), "%tag%", c.tag());
     }
     private void delete(Player p, Clan c) { if (c == null) { send(p, "no-clan"); return; } if (!leader(p,c)) { send(p,"only-leader"); return; } plugin.clans().delete(c); send(p,"deleted","%name%",c.name()); }
@@ -90,10 +91,10 @@ public final class ClanCommand implements CommandExecutor, TabCompleter {
     private void chat(Player p,Clan c,String[] a){if(c==null){send(p,"no-clan");return;}if(a.length<2){p.sendMessage(title("&eUso: /clan chat <mensagem>"));return;}String message=String.join(" ",Arrays.copyOfRange(a,1,a.length));String formatted=plugin.raw("chat-format","%tag%",c.tag(),"%player%",p.getName(),"%message%",message);for(UUID u:c.members().keySet()){Player m=Bukkit.getPlayer(u);if(m!=null)m.sendMessage(formatted);} }
     private void setHome(Player p,Clan c){if(!manager(p,c)){send(p,"only-leader-mod");return;}c.setHome(p.getLocation().clone());plugin.clans().save();send(p,"sethome");}
     private void home(Player p,Clan c){if(c==null){send(p,"no-clan");return;}if(c.home()==null){send(p,"home-missing");return;}int seconds=plugin.getConfig().getInt("teleport.warmup-seconds",3);send(p,"teleporting","%seconds%",String.valueOf(seconds));Bukkit.getScheduler().runTaskLater(plugin,()->{if(p.isOnline()){p.teleport(c.home());send(p,"teleported");}},seconds*20L);}
-    private void setTag(Player p,Clan c,String[] a){if(!leader(p,c)){send(p,c==null?"no-clan":"only-leader");return;}if(a.length<2){p.sendMessage(title("&eUso: /clan tag <tag>"));return;}String tag=a[1];if(!tag.matches("[A-Z]{3}")){p.sendMessage(plugin.msg("invalid-tag"));return;}if(!tag.equals(c.tag())&&plugin.clans().tagTaken(tag)){p.sendMessage(title("&cEssa tag já está sendo usada."));return;}c.setTag(tag);plugin.clans().save();send(p,"tag-updated","%tag%",tag);}
+    private void setTag(Player p,Clan c,String[] a){if(!leader(p,c)){send(p,c==null?"no-clan":"only-leader");return;}if(a.length<2){p.sendMessage(title("&eUso: /clan tag <tag>"));return;}String tag=a[1];if(!validTag(tag)){p.sendMessage(plugin.msg("invalid-tag"));return;}String plain=stripTagColors(tag);if(!tag.equals(c.tag())&&plugin.clans().tagTaken(plain)){p.sendMessage(title("&cEssa tag já está sendo usada."));return;}c.setTag(tag);plugin.clans().save();send(p,"tag-updated","%tag%",tag);}
     private void info(Player p,Clan c){if(c==null){send(p,"not-found");return;}p.sendMessage(title("&8&lᴄʟᴀɴ &8• &f"+c.name()));p.sendMessage(title("&7Tag: &6"+c.tag()));p.sendMessage(title("&7Líder: &f"+Bukkit.getOfflinePlayer(c.owner()).getName()));p.sendMessage(title("&7Membros: &f"+c.members().size()+"&7/&f"+plugin.getConfig().getInt("clan.max-members",30)));p.sendMessage(title("&7Online: &f"+c.onlineCount()));p.sendMessage(title("&7KDR médio: &e"+String.format(Locale.US,"%.2f",plugin.clans().clanKdr(c))));p.sendMessage(title("&7Home: &f"+(c.home()!=null?"definida":"não definida")));}
 
-    public void openMenu(Player p,Clan c){Inventory inv=Bukkit.createInventory(null,27, title(plugin.raw("menu-title","%name%",c.name())));inv.setItem(10,item(Material.BOOK,"&6Informações","&7Clique para ver os dados da clan."));inv.setItem(12,item(Material.PLAYER_HEAD,"&eMembros","&7Membros: &f"+c.members().size()));inv.setItem(14,item(Material.ENDER_CHEST,"&bBaú da clan","&7Baú comunitário."));inv.setItem(16,item(Material.COMPASS,"&aHome","&7Teleportar para a home."));inv.setItem(22,item(Material.NAME_TAG,"&eTag","&7Use /clan tag <tag>."));if(manager(p,c))inv.setItem(24,item(Material.COMPARATOR,"&cConfiguração","&7Abrir configurações."));p.openInventory(inv);}
+    public void openMenu(Player p,Clan c){Inventory inv=Bukkit.createInventory(null,27,title(plugin.raw("menu-title","%name%",c.name())));inv.setItem(10,item(Material.BOOK,"&6Informações","&7Clique para ver os dados da clan."));inv.setItem(12,item(Material.PLAYER_HEAD,"&eMembros","&7Membros: &f"+c.members().size()));inv.setItem(14,item(Material.ENDER_CHEST,"&bBaú da clan","&7Baú comunitário."));inv.setItem(16,item(Material.COMPASS,"&aHome","&7Teleportar para a home."));inv.setItem(22,item(Material.NAME_TAG,"&eTag","&7Use /clan tag <tag>."));if(manager(p,c))inv.setItem(24,item(Material.COMPARATOR,"&cConfiguração","&7Abrir configurações."));p.openInventory(inv);}
     public void openConfig(Player p,Clan c){if(!manager(p,c)){send(p,"only-leader-mod");return;}Inventory inv=Bukkit.createInventory(null,27,title(plugin.raw("config-title")));inv.setItem(11,item(c.friendlyFire()?Material.GREEN_WOOL:Material.RED_WOOL,"&ePvP entre membros: "+(c.friendlyFire()?"&aON":"&cOFF"),"&7Clique para alternar."));inv.setItem(15,item(Material.ARROW,"&cVoltar","&7Voltar ao menu."));p.openInventory(inv);}
     private void chest(Player p,Clan c){if(c==null){send(p,"no-clan");return;}boolean allowed=plugin.getConfig().getBoolean("clan.allow-member-chest",true);if(!allowed&&!manager(p,c)){send(p,"no-permission");return;}Inventory inv=Bukkit.createInventory(null,27,title(plugin.raw("chest-title","%name%",c.name())));inv.setContents(Arrays.copyOf(c.chest(),27));p.openInventory(inv);}
 
