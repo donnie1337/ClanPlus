@@ -1,4 +1,5 @@
 prefix: '&1&lᴄʟᴀɴ &8• &r'
+login-required: '&cVocê precisa estar autenticado para usar o ClanPlus.'
 no-clan: '&cVocê não está em uma clan.'
 already-clan: '&cVocê já está em uma clan.'
 created: '&aClan criada com sucesso: &f%name% &7[%tag%]&a.'
