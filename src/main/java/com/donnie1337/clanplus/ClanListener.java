@@ -7,7 +7,6 @@ import org.bukkit.ChatColor;
 import org.bukkit.Material;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
-import org.bukkit.event.Listener;
 import org.bukkit.event.entity.PlayerDeathEvent;
 import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.event.inventory.InventoryDragEvent;
@@ -170,7 +169,7 @@ public final class ClanListener implements Listener {
         e.setCancelled(true); Player p = e.getPlayer();
         if (!LoginPlusHook.isAuthenticated(p)) { createSteps.remove(uuid); createNames.remove(uuid); p.sendMessage(plugin.msg("login-required")); return; }
         String input = e.getMessage().trim();
-        if (input.equalsIgnoreCase("cancelar")) { cancelCreation(p); return; }
+        if (step == CreateStep.NAME && input.equalsIgnoreCase("cancelar")) { cancelCreation(p); return; }
         if (step == CreateStep.NAME) {
             int min = plugin.getConfig().getInt("clan.name-min-length", 3), max = plugin.getConfig().getInt("clan.name-max-length", 16);
             if (!input.matches("[A-Za-z0-9_\\-]+") || input.length() < min || input.length() > max) {
@@ -185,7 +184,6 @@ public final class ClanListener implements Listener {
             }
             createNames.put(uuid, input); createSteps.put(uuid, CreateStep.TAG);
             p.sendMessage(plugin.msg("create-name-set", "%name%", input));
-            sendCancelButton(p);
             return;
         }
         String name = createNames.remove(uuid); createSteps.remove(uuid);
