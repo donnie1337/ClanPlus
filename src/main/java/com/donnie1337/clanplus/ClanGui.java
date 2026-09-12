@@ -33,7 +33,7 @@ public final class ClanGui {
     private ItemStack item(Material material, String name, String... lore) {
         ItemStack stack = new ItemStack(material);
         ItemMeta meta = stack.getItemMeta();
-        meta.setDisplayName(color(name));
+        meta.setDisplayName(color(name).replace("§l", ""));
         if (lore.length > 0) meta.setLore(java.util.Arrays.stream(lore).map(this::color).toList());
         stack.setItemMeta(meta);
         return stack;
@@ -43,7 +43,7 @@ public final class ClanGui {
         ItemStack stack = new ItemStack(Material.PLAYER_HEAD);
         SkullMeta meta = (SkullMeta) stack.getItemMeta();
         meta.setOwningPlayer(player);
-        meta.setDisplayName(color(name));
+        meta.setDisplayName(color(name).replace("§l", ""));
         meta.setLore(java.util.Arrays.stream(lore).map(this::color).toList());
         stack.setItemMeta(meta);
         return stack;
