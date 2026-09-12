@@ -14,6 +14,7 @@ import java.util.*;
 public final class ClanManager {
     private final ClanPlus plugin;
     private final Map<String, Clan> clans = new LinkedHashMap<>();
+    private final Map<UUID, int[]> stats = new HashMap<>();
     private File file;
     private YamlConfiguration data;
 
@@ -26,6 +27,14 @@ public final class ClanManager {
         }
         data = YamlConfiguration.loadConfiguration(file);
         clans.clear();
+        stats.clear();
+        ConfigurationSection statsRoot = data.getConfigurationSection("stats");
+        if (statsRoot != null) for (String uuid : statsRoot.getKeys(false)) {
+            try {
+                ConfigurationSection s = statsRoot.getConfigurationSection(uuid);
+                if (s != null) stats.put(UUID.fromString(uuid), new int[]{s.getInt("kills"), s.getInt("deaths")});
+            } catch (IllegalArgumentException ignored) { }
+        }
         ConfigurationSection root = data.getConfigurationSection("clans");
         if (root == null) return;
         for (String id : root.getKeys(false)) {
@@ -63,6 +72,11 @@ public final class ClanManager {
     public synchronized void save() {
         if (data == null) return;
         data.set("clans", null);
+        data.set("stats", null);
+        for (Map.Entry<UUID, int[]> entry : stats.entrySet()) {
+            data.set("stats." + entry.getKey() + ".kills", entry.getValue()[0]);
+            data.set("stats." + entry.getKey() + ".deaths", entry.getValue()[1]);
+        }
         for (Clan c : clans.values()) {
             String p = "clans." + c.id();
             data.set(p + ".name", c.name());
@@ -91,8 +105,16 @@ public final class ClanManager {
     public Clan byPlayer(UUID uuid) { return clans.values().stream().filter(c -> c.hasMember(uuid)).findFirst().orElse(null); }
     public boolean nameTaken(String name) { return byName(name) != null; }
     public boolean tagTaken(String tag) { return byTag(tag) != null; }
-    public Clan create(String name, String tag, UUID owner) { String id = UUID.randomUUID().toString(); Clan c = new Clan(id, name, tag, owner); clans.put(id, c); save(); return c; }
+    public Clan create(String name, String tag, UUID owner) { String id = UUID.randomUUID().toString(); Clan c = new Clan(id, name, tag, owner); clans.put(id, c); stats.putIfAbsent(owner, new int[2]); save(); return c; }
     public void delete(Clan c) { clans.remove(c.id()); save(); }
     public void cleanupExpiredInvites() { long now = System.currentTimeMillis(); for (Clan c : clans.values()) c.invites().values().removeIf(i -> i.expiresAt() < now); }
     public int nextInviteId(Clan c) { int id = 1; while (c.invites().containsKey(id)) id++; return id; }
+
+    public void recordDeath(UUID uuid) { stats.computeIfAbsent(uuid, x -> new int[2])[1]++; save(); }
+    public void recordKill(UUID uuid) { stats.computeIfAbsent(uuid, x -> new int[2])[0]++; save(); }
+    public int kills(UUID uuid) { return stats.getOrDefault(uuid, new int[2])[0]; }
+    public int deaths(UUID uuid) { return stats.getOrDefault(uuid, new int[2])[1]; }
+    public double kdr(UUID uuid) { int deaths = deaths(uuid); return deaths == 0 ? kills(uuid) : (double) kills(uuid) / deaths; }
+    public Set<UUID> statsPlayers() { return Collections.unmodifiableSet(stats.keySet()); }
+    public double clanKdr(Clan clan) { if (clan.members().isEmpty()) return 0.0; return clan.members().keySet().stream().mapToDouble(this::kdr).average().orElse(0.0); }
 }
