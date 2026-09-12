@@ -44,13 +44,14 @@ public final class ClanGui {
         ItemStack profile = new ItemStack(Material.PLAYER_HEAD);
         SkullMeta skull = (SkullMeta) profile.getItemMeta(); skull.setOwningPlayer(p); skull.setDisplayName(color("&b&l" + p.getName()));
         skull.setLore(List.of(color("&7Clan: &f" + clanName), color("&7Cargo: &f" + role), color("&7Coins: &6" + coins(p)), "", color("&7KDR: &e" + String.format(Locale.US, "%.2f", plugin.clans().kdr(p.getUniqueId()))), color("&7Kills: &a" + kills), color("&7Mortes: &c" + deaths)));
-        profile.setItemMeta(skull); inv.setItem(4, profile);
-        inv.setItem(10, item(c == null ? Material.EMERALD : Material.CHEST, c == null ? "&aCriar Clan" : "&bMeu Clan", c == null ? "&7Crie seu próprio clan." : "&7Gerencie seu clan."));
-        inv.setItem(12, item(Material.WRITABLE_BOOK, "&eConvites recebidos", "&7Veja e aceite seus convites."));
+        profile.setItemMeta(skull);
+        inv.setItem(4, profile);
+        inv.setItem(11, item(c == null ? Material.EMERALD : Material.CHEST, c == null ? "&aCriar Clan" : "&bMeu Clan", c == null ? "&7Crie seu próprio clan." : "&7Gerencie seu clan."));
+        inv.setItem(13, item(Material.WRITABLE_BOOK, "&eConvites recebidos", "&7Veja e aceite seus convites."));
         inv.setItem(14, item(Material.NETHER_STAR, "&6Clans mais Top", "&7Ranking baseado no KDR médio", "&7dos jogadores de cada clan."));
         inv.setItem(16, item(Material.NAME_TAG, "&fClans do servidor", "&7Veja todos os clans existentes."));
-        inv.setItem(22, item(Material.DIAMOND_SWORD, "&cRanking de KDR", "&7Veja os melhores jogadores."));
-        inv.setItem(26, item(Material.BARRIER, "&cFechar")); p.openInventory(inv);
+        inv.setItem(17, item(Material.DIAMOND_SWORD, "&cRanking de KDR", "&7Veja os melhores jogadores."));
+        p.openInventory(inv);
     }
     public void openInvites(Player p) {
         Inventory inv = Bukkit.createInventory(null, 54, INVITES); plugin.clans().cleanupExpiredInvites(); int slot = 0;
