@@ -1,5 +1,6 @@
 package com.donnie1337.clanplus;
 
+import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.inventory.ItemStack;
 
@@ -45,25 +46,42 @@ public final class Clan {
 
     public void setName(String name) { this.name = name; }
     public void setTag(String tag) { this.tag = tag; }
-    public void setOwner(UUID owner) { this.owner = owner; members.put(owner, ClanRole.LEADER); }
-    public void setHome(Location home) { this.home = home; }
-    public void setChest(ItemStack[] chest) { this.chest = chest == null ? new ItemStack[27] : chest; }
-    public void setFriendlyFire(boolean friendlyFire) { this.friendlyFire = friendlyFire; }
+    public void setOwner(UUID owner) {
+        if (owner == null) return;
+        members.remove(this.owner);
+        this.owner = owner;
+        members.put(owner, ClanRole.LEADER);
+    }
+    public void setHome(Location home) { this.home = home == null ? null : home.clone(); }
+    public void setChest(ItemStack[] chest) { this.chest = chest == null ? new ItemStack[27] : normalizeChest(chest); }
+    public boolean setFriendlyFire(boolean friendlyFire) { this.friendlyFire = friendlyFire; return friendlyFire; }
     public void setXp(long xp) { this.xp = Math.max(0L, xp); }
     public void setCreatedAt(long createdAt) { this.createdAt = createdAt > 0 ? createdAt : System.currentTimeMillis(); }
     public void setUpgrade(String key, int level) { if (key != null && !key.isBlank()) upgrades.put(key, Math.max(0, level)); }
 
     public int upgrade(String key) { return upgrades.getOrDefault(key, 0); }
-    public int level() { return (int) Math.min(100, xp / 1000L + 1); }
-    public long xpIntoLevel() { return xp % 1000L; }
-    public long xpForNextLevel() { return 1000L; }
-    public double levelProgress() { return xpIntoLevel() / 1000.0D; }
-    public int memberLimit(int base) { return base + upgrade("member_limit") * 5; }
-    public double xpMultiplier() { return 1.0D + upgrade("xp_boost") * 0.10D; }
+    public int level(long xpPerLevel, int maxLevel) {
+        long step = Math.max(1L, xpPerLevel);
+        return (int) Math.min(Math.max(1, maxLevel), xp / step + 1L);
+    }
+    public long xpIntoLevel(long xpPerLevel) {
+        long step = Math.max(1L, xpPerLevel);
+        return xp % step;
+    }
+    public long xpForNextLevel(long xpPerLevel) { return Math.max(1L, xpPerLevel); }
+    public double levelProgress(long xpPerLevel) { return xpIntoLevel(xpPerLevel) / (double) Math.max(1L, xpPerLevel); }
+    public int memberLimit(int base, int maxUpgrade) { return Math.min(base + upgrade("member_limit") * 5, base + Math.max(0, maxUpgrade) * 5); }
+    public double xpMultiplier(int maxUpgrade) { return 1.0D + Math.min(upgrade("xp_boost"), Math.max(0, maxUpgrade)) * 0.10D; }
 
     public ClanRole role(UUID player) { return members.get(player); }
-    public boolean hasMember(UUID player) { return members.containsKey(player); }
-    public int onlineCount() { return (int) members.keySet().stream().filter(u -> org.bukkit.Bukkit.getPlayer(u) != null).count(); }
+    public boolean hasMember(UUID player) { return player != null && members.containsKey(player); }
+    public int onlineCount() { return (int) members.keySet().stream().filter(u -> Bukkit.getPlayer(u) != null).count(); }
+
+    private ItemStack[] normalizeChest(ItemStack[] source) {
+        ItemStack[] result = new ItemStack[27];
+        System.arraycopy(source, 0, result, 0, Math.min(source.length, result.length));
+        return result;
+    }
 
     public record Invite(int id, UUID player, long expiresAt) {}
 }
