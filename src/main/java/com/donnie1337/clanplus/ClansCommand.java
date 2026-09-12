@@ -11,7 +11,7 @@ public final class ClansCommand implements CommandExecutor {
     @Override public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
         if (!(sender instanceof Player p)) { sender.sendMessage("Apenas jogadores podem usar este comando."); return true; }
         if (!LoginPlusHook.requireAuthentication(plugin, p)) return true;
-        new ClanGui(plugin).openMain(p);
+        new ClanFeatureListener(plugin).openDashboard(p);
         return true;
     }
 }
