@@ -9,6 +9,7 @@ import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.event.inventory.InventoryCloseEvent;
 
 import java.util.Arrays;
+import java.util.UUID;
 
 public final class ClanListener implements Listener {
     private final ClanPlus plugin;
@@ -68,18 +69,62 @@ public final class ClanListener implements Listener {
             return;
         }
 
+        if (title.equals("Membros da clan")) {
+            e.setCancelled(true);
+            Clan c = plugin.clans().byPlayer(p.getUniqueId());
+            if (c == null) { p.closeInventory(); return; }
+            if (e.getRawSlot() == 49) { new ClanCommand(plugin).openMenu(p, c); return; }
+            if (e.getRawSlot() < 0 || e.getRawSlot() >= 45) return;
+            if (e.getCurrentItem() == null || !(e.getCurrentItem().getItemMeta() instanceof org.bukkit.inventory.meta.SkullMeta)) return;
+            org.bukkit.inventory.meta.SkullMeta meta = (org.bukkit.inventory.meta.SkullMeta) e.getCurrentItem().getItemMeta();
+            if (meta.getOwningPlayer() == null) return;
+            UUID target = meta.getOwningPlayer().getUniqueId();
+            if (target.equals(c.owner())) { p.sendMessage(plugin.msg("cannot-kick-leader")); return; }
+            if (!c.role(p.getUniqueId()).canManage()) { p.sendMessage(plugin.msg("only-leader-mod")); return; }
+            ClanRole targetRole = c.role(target);
+            if (targetRole == null) return;
+            if (!c.owner().equals(p.getUniqueId()) && targetRole != ClanRole.MEMBER) { p.sendMessage(plugin.msg("moderator-cannot-kick-manager")); return; }
+            String targetName = meta.getOwningPlayer().getName();
+            c.members().remove(target);
+            plugin.clans().save();
+            p.sendMessage(plugin.msg("member-kicked", "%player%", targetName == null ? target.toString().substring(0, 8) : targetName));
+            Player online = org.bukkit.Bukkit.getPlayer(target);
+            if (online != null) online.sendMessage(plugin.msg("kicked-from-clan", "%name%", c.name()));
+            new ClanGui(plugin).openMembers(p, c);
+            return;
+        }
+
+        if (title.equals("Excluir clan")) {
+            e.setCancelled(true);
+            Clan c = plugin.clans().byPlayer(p.getUniqueId());
+            if (c == null || !c.owner().equals(p.getUniqueId())) { p.closeInventory(); return; }
+            if (e.getRawSlot() == 15) { new ClanCommand(plugin).openMenu(p, c); return; }
+            if (e.getRawSlot() != 11) return;
+            if (c.members().size() > 1) { p.sendMessage(plugin.msg("delete-requires-empty")); new ClanGui(plugin).openDelete(p, c); return; }
+            String name = c.name();
+            plugin.clans().delete(c);
+            p.closeInventory();
+            p.sendMessage(plugin.msg("deleted", "%name%", name));
+            return;
+        }
+
         if (title.startsWith("Clan de ")) {
             e.setCancelled(true);
             Clan c = plugin.clans().byPlayer(p.getUniqueId());
             if (c == null) { p.closeInventory(); return; }
             switch (e.getRawSlot()) {
                 case 10 -> { p.closeInventory(); p.sendMessage(plugin.msg("prefix") + ChatColor.WHITE + "Informações:"); p.sendMessage(ChatColor.GRAY + "Nome: " + ChatColor.WHITE + c.name()); p.sendMessage(ChatColor.GRAY + "Tag: " + ChatColor.GOLD + c.tag()); p.sendMessage(ChatColor.GRAY + "Membros: " + ChatColor.WHITE + c.members().size()); p.sendMessage(ChatColor.GRAY + "KDR médio: " + ChatColor.YELLOW + String.format(java.util.Locale.US, "%.2f", plugin.clans().clanKdr(c))); }
+                case 12 -> new ClanGui(plugin).openMembers(p, c);
                 case 14 -> { p.closeInventory(); p.performCommand("clan bau"); }
                 case 16 -> { p.closeInventory(); p.performCommand("clan home"); }
                 case 22 -> { p.closeInventory(); p.sendMessage(ChatColor.YELLOW + "Use /clan tag <TAG> para alterar a tag."); }
-                case 24 -> { if (c.role(p.getUniqueId()).canManage()) plugin.clans().save(); p.closeInventory(); p.performCommand("clan config"); }
+                case 24 -> { if (c.role(p.getUniqueId()).canManage()) { p.closeInventory(); p.performCommand("clan config"); } }
+                case 18 -> { if (c.owner().equals(p.getUniqueId())) new ClanGui(plugin).openDelete(p, c); else p.sendMessage(plugin.msg("only-leader")); }
             }
-        } else if (title.equals("Configuração da clan")) {
+            return;
+        }
+
+        if (title.equals("Configuração da clan")) {
             e.setCancelled(true);
             Clan c = plugin.clans().byPlayer(p.getUniqueId());
             if (c == null || !c.role(p.getUniqueId()).canManage()) { p.closeInventory(); return; }
