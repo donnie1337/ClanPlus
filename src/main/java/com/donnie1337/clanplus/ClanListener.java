@@ -34,14 +34,15 @@ public final class ClanListener implements Listener {
     @EventHandler
     public void onDeath(PlayerDeathEvent e) {
         Player victim = e.getEntity();
-        plugin.clans().recordDeath(victim.getUniqueId());
+        if (LoginPlusHook.isAuthenticated(victim)) plugin.clans().recordDeath(victim.getUniqueId());
         Player killer = victim.getKiller();
-        if (killer != null && !killer.getUniqueId().equals(victim.getUniqueId())) plugin.clans().recordKill(killer.getUniqueId());
+        if (killer != null && !killer.getUniqueId().equals(victim.getUniqueId()) && LoginPlusHook.isAuthenticated(killer)) plugin.clans().recordKill(killer.getUniqueId());
     }
 
     @EventHandler
     public void onClick(InventoryClickEvent e) {
         if (!(e.getWhoClicked() instanceof Player p)) return;
+        if (!LoginPlusHook.requireAuthentication(plugin, p)) { e.setCancelled(true); p.closeInventory(); return; }
         String title = clean(e.getView().getTitle());
         if (title.startsWith("Baú da clan:")) return;
 
@@ -153,6 +154,7 @@ public final class ClanListener implements Listener {
     }
 
     private void startCreation(Player p) {
+        if (!LoginPlusHook.requireAuthentication(plugin, p)) return;
         if (plugin.clans().byPlayer(p.getUniqueId()) != null) { p.sendMessage(plugin.msg("already-clan")); return; }
         createSteps.put(p.getUniqueId(), CreateStep.NAME); createNames.remove(p.getUniqueId());
         p.sendMessage(plugin.raw("prefix") + ChatColor.YELLOW + "Digite no chat o " + ChatColor.WHITE + "nome da clan" + ChatColor.YELLOW + "."); sendCancelButton(p);
@@ -167,7 +169,9 @@ public final class ClanListener implements Listener {
     @EventHandler
     public void onChat(AsyncPlayerChatEvent e) {
         UUID uuid = e.getPlayer().getUniqueId(); CreateStep step = createSteps.get(uuid); if (step == null) return;
-        e.setCancelled(true); Player p = e.getPlayer(); String input = e.getMessage().trim();
+        e.setCancelled(true); Player p = e.getPlayer();
+        if (!LoginPlusHook.isAuthenticated(p)) { createSteps.remove(uuid); createNames.remove(uuid); p.sendMessage(plugin.msg("login-required")); return; }
+        String input = e.getMessage().trim();
         if (input.equalsIgnoreCase("cancelar")) { cancelCreation(p); return; }
         if (step == CreateStep.NAME) {
             int min = plugin.getConfig().getInt("clan.name-min-length", 3), max = plugin.getConfig().getInt("clan.name-max-length", 16);
@@ -177,7 +181,8 @@ public final class ClanListener implements Listener {
             p.sendMessage(plugin.raw("prefix") + ChatColor.YELLOW + "Agora digite no chat a " + ChatColor.WHITE + "TAG" + ChatColor.YELLOW + " da clan (3 letras MAIÚSCULAS, cores permitidas)."); sendCancelButton(p); return;
         }
         String name = createNames.remove(uuid); createSteps.remove(uuid);
-        Bukkit.getScheduler().runTask(plugin, () -> { if (p.isOnline()) p.performCommand("clan criar " + name + " " + input); });
+        if (name == null || name.isBlank()) return;
+        Bukkit.getScheduler().runTask(plugin, () -> { if (p.isOnline() && LoginPlusHook.isAuthenticated(p)) p.performCommand("clan criar " + name + " " + input); });
     }
 
     private void cancelCreation(Player p) {
@@ -187,9 +192,21 @@ public final class ClanListener implements Listener {
 
     @EventHandler
     public void onCommand(PlayerCommandPreprocessEvent e) {
-        if (!e.getMessage().equalsIgnoreCase("/clan cancelar")) return;
-        if (!createSteps.containsKey(e.getPlayer().getUniqueId())) return;
-        e.setCancelled(true); cancelCreation(e.getPlayer());
+        String message = e.getMessage().trim();
+        if (!message.regionMatches(true, 0, "/clan", 0, 5)) return;
+        String rest = message.length() > 5 ? message.substring(5) : "";
+        if (!rest.isEmpty() && !Character.isWhitespace(rest.charAt(0))) return;
+        Player p = e.getPlayer();
+        if (!LoginPlusHook.requireAuthentication(plugin, p)) {
+            e.setCancelled(true);
+            createSteps.remove(p.getUniqueId());
+            createNames.remove(p.getUniqueId());
+            if (p.getOpenInventory() != null && !clean(p.getOpenInventory().getTitle()).startsWith("Baú da clan:")) p.closeInventory();
+            return;
+        }
+        if (!message.equalsIgnoreCase("/clan cancelar")) return;
+        if (!createSteps.containsKey(p.getUniqueId())) return;
+        e.setCancelled(true); cancelCreation(p);
     }
 
     @EventHandler
@@ -197,6 +214,7 @@ public final class ClanListener implements Listener {
         String title = clean(e.getView().getTitle());
         if (!title.startsWith("Baú da clan:")) return;
         if (!(e.getPlayer() instanceof Player p)) return;
+        if (!LoginPlusHook.isAuthenticated(p)) return;
         Clan c = plugin.clans().byPlayer(p.getUniqueId()); if (c == null) return;
         c.setChest(Arrays.copyOf(e.getInventory().getContents(), 27)); plugin.clans().save();
     }
