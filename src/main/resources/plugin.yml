@@ -17,13 +17,13 @@ commands:
 permissions:
   clanplus.*:
     description: Acesso completo ao ClanPlus.
-    default: op
+    default: false
     children:
       clanplus.clan: true
       clanplus.admin: true
   clanplus.clan:
     description: Acesso aos comandos de clans.
-    default: true
+    default: false
   clanplus.admin:
-    description: Acesso ao painel administrativo.
-    default: op
+    description: Acesso ao painel administrativo. Deve ser concedido somente ao cargo DEV.
+    default: false
