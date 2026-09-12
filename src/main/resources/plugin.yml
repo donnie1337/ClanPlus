@@ -1,0 +1,29 @@
+name: ClanPlus
+version: '${project.version}'
+main: com.donnie1337.clanplus.ClanPlus
+api-version: '26.2'
+author: donnie1337
+description: Sistema de clans para Spigot/Paper.
+commands:
+  clans:
+    description: Abre o localizador de clans.
+    permission: clanplus.clan
+  clan:
+    description: Abre o painel e gerencia seu clan.
+    permission: clanplus.clan
+  clanadmin:
+    description: Abre o painel administrativo dos clans.
+    permission: clanplus.admin
+permissions:
+  clanplus.*:
+    description: Acesso completo ao ClanPlus.
+    default: op
+    children:
+      clanplus.clan: true
+      clanplus.admin: true
+  clanplus.clan:
+    description: Acesso aos comandos de clans.
+    default: true
+  clanplus.admin:
+    description: Acesso ao painel administrativo.
+    default: op
