@@ -1,13 +1,15 @@
 clan:
   name-min-length: 3
   name-max-length: 16
-  tag-min-length: 2
-  tag-max-length: 6
+  tag-min-length: 3
+  tag-max-length: 3
   max-members: 30
   invite-expiration-minutes: 10
   allow-member-chest: true
   allow-member-home: true
   require-online-target-for-invite: true
+coins:
+  placeholder: '%vault_eco_balance_fixed%'
 storage:
   file: clans.yml
 teleport:
