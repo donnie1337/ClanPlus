@@ -124,11 +124,11 @@ public final class ClanFeatureListener implements Listener {
                 clan == null ? "" : "&7Seu cargo: &f" + role,
                 "",
                 clan == null ? "&aClique para começar" : "&bClique para abrir"));
-        inv.setItem(13, item(Material.WRITABLE_BOOK, "&eConvites recebidos",
+        inv.setItem(14, item(Material.WRITABLE_BOOK, "&eConvites recebidos",
                 "&7Convites enviados para você.", "&7Pendentes: &f" + pending, "", "&eClique para visualizar"));
-        inv.setItem(14, item(Material.NETHER_STAR, "&6Ranking",
+        inv.setItem(16, item(Material.NETHER_STAR, "&6Ranking",
                 "&7Veja a classificação das clans.", "&7Critérios: nível, KDR e XP.", "", "&6Clique para abrir"));
-        inv.setItem(15, item(Material.NAME_TAG, "&fClans do servidor",
+        inv.setItem(17, item(Material.NAME_TAG, "&fClans do servidor",
                 "&7Veja todas as clans existentes.", "&7Nome, TAG, membros e KDR.", "", "&fClique para explorar"));
         p.openInventory(inv);
     }
@@ -214,9 +214,9 @@ public final class ClanFeatureListener implements Listener {
                         decorateClanMenu(p, clan);
                     }
                 }
-                case 13 -> { p.closeInventory(); new ClanGui(plugin).openInvites(p); }
-                case 14 -> openRanking(p);
-                case 15 -> { p.closeInventory(); new ClanGui(plugin).openAll(p); }
+                case 14 -> { p.closeInventory(); new ClanGui(plugin).openInvites(p); }
+                case 16 -> openRanking(p);
+                case 17 -> { p.closeInventory(); new ClanGui(plugin).openAll(p); }
                 default -> { }
             }
             return;
