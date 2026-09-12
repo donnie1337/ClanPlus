@@ -39,8 +39,8 @@ menu-title: '&8Clan de %name%'
 locator-title: '&8Clans do servidor'
 chest-title: '&8Baú da clan: %name%'
 admin-title: '&8Painel administrativo'
-create-start: "&3&lᴄʟᴀɴ &8• &r&fCriação de clan iniciada!\n\n&8• &7Digite no chat o &fnome &7da sua clan.\n&8• &7Use entre &f%min% &7e &f%max% &7caracteres.\n&8• &7Permitidos: letras, números, &f_ &7ou &f-.\n\n&8• &7Para cancelar, clique &cAQUI&7."
-create-name-set: "&3&lᴄʟᴀɴ &8• &r&fNome definido!\n\n&8• &7Clan: &f%name%\n\n&8• &7Agora digite no chat a &fTAG &7da sua clan.\n&8• &7A TAG deve possuir exatamente &f3 letras MAIÚSCULAS&7.\n&8• &7Cores são permitidas.\n\n&8• &7Exemplo: &7R&8V&9T\n\n&8• &7Para cancelar, clique &cAQUI&7."
+create-start: "&3&lᴄʟᴀɴ &8• &r&fCriação de clan iniciada!\n\n&8• &7Digite no chat o &fnome &7da sua clan.\n&8• &7Use entre &f%min% &7e &f%max% &7caracteres.\n&8• &7Permitidos: letras, números, &f_ &7ou &f-.\n\n&8• &7Para cancelar, clique &c&lAQUI&7."
+create-name-set: "&3&lᴄʟᴀɴ &8• &r&fNome definido!\n\n&8• &7Clan: &f%name%\n\n&8• &7Agora digite no chat a &fTAG &7da sua clan.\n&8• &7A TAG deve possuir exatamente &f3 letras MAIÚSCULAS&7.\n&8• &7Cores são permitidas.\n\n&8• &7Exemplo: &7R&8V&9T\n\n&8• &7Para cancelar, clique &c&lAQUI&7."
 create-invalid-name: "&3&lᴄʟᴀɴ &8• &r&cNome inválido!\n&8• &7Use entre &f%min% &7e &f%max% &7caracteres.\n&8• &7Permitidos: letras, números, &f_ &7ou &f-."
 create-name-taken: "&3&lᴄʟᴀɴ &8• &r&cEsse nome já está sendo usado.\n&8• &7Escolha outro nome para sua clan."
 create-cancelled: '&3&lᴄʟᴀɴ &8• &r&7Criação da clan cancelada.'
