@@ -48,7 +48,7 @@ public final class ClanListener implements Listener {
         if (title.equals("ᴄʟᴀɴ")) {
             e.setCancelled(true);
             switch (e.getRawSlot()) {
-                case 10 -> { if (plugin.clans().byPlayer(p.getUniqueId()) == null) openCreateGui(p); else { p.closeInventory(); p.performCommand("clan menu"); } }
+                case 11 -> { if (plugin.clans().byPlayer(p.getUniqueId()) == null) openCreateGui(p); else { p.closeInventory(); p.performCommand("clan menu"); } }
                 case 12 -> new ClanGui(plugin).openInvites(p);
                 case 14 -> new ClanGui(plugin).openTop(p);
                 case 16 -> new ClanGui(plugin).openAll(p);
@@ -171,7 +171,7 @@ public final class ClanListener implements Listener {
         if (input.equalsIgnoreCase("cancelar")) { cancelCreation(p); return; }
         if (step == CreateStep.NAME) {
             int min = plugin.getConfig().getInt("clan.name-min-length", 3), max = plugin.getConfig().getInt("clan.name-max-length", 16);
-            if (!input.matches("[A-Za-z0-9_\\-]+") || input.length() < min || input.length() > max) { p.sendMessage(plugin.raw("prefix") + ChatColor.RED + "Nome inválido. Use " + min + "-" + max + " caracteres, letras, números, _ ou -." ); sendCancelButton(p); return; }
+            if (!input.matches("[A-Za-z0-9_\\-]+") || input.length() < min || input.length() > max) { p.sendMessage(plugin.raw("prefix") + ChatColor.RED + "Nome inválido. Use " + min + "-" + max + " caracteres, letras, números, _ ou -."); sendCancelButton(p); return; }
             if (plugin.clans().nameTaken(input)) { p.sendMessage(plugin.raw("prefix") + ChatColor.RED + "Já existe uma clan com esse nome."); sendCancelButton(p); return; }
             createNames.put(uuid, input); createSteps.put(uuid, CreateStep.TAG);
             p.sendMessage(plugin.raw("prefix") + ChatColor.YELLOW + "Agora digite no chat a " + ChatColor.WHITE + "TAG" + ChatColor.YELLOW + " da clan (3 letras MAIÚSCULAS, cores permitidas)."); sendCancelButton(p); return;
