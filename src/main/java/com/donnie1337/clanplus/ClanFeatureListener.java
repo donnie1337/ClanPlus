@@ -52,8 +52,6 @@ public final class ClanFeatureListener implements Listener {
         lore.add(color("&7Clan: &f" + (clan == null ? "Nenhum" : clan.name())));
         lore.add(color("&7Cargo: &f" + (clan == null ? "Nenhum" : roleName(clan.role(p.getUniqueId())))));
         lore.add(color("&7KDR: &e" + kdr(playerKdr(p))));
-        lore.add("");
-        lore.add(color("&fClique para visualizar"));
         meta.setLore(lore);
         item.setItemMeta(meta);
         return item;
@@ -115,7 +113,6 @@ public final class ClanFeatureListener implements Listener {
         String role = clan == null ? "Nenhum" : roleName(clan.role(p.getUniqueId()));
         int pending = pendingInvites(p.getUniqueId());
 
-        // Linha principal: perfil, criar/meu clan, convites, ranking e clans do servidor.
         inv.setItem(11, profileHead(p, clan));
         inv.setItem(12, item(clan == null ? Material.PAPER : Material.CHEST,
                 clan == null ? "&aCriar Clan" : "&bMeu Clan",
@@ -151,8 +148,6 @@ public final class ClanFeatureListener implements Listener {
         if (clan != null) {
             inv.setItem(11, item(Material.NAME_TAG, "&eClan", "&7Nome: &f" + clan.name(), "&7TAG: &f" + clan.tag(), "&7Cargo: &f" + roleName(clan.role(p.getUniqueId()))));
             inv.setItem(15, item(Material.IRON_SWORD, "&cDesempenho", "&7KDR da clan: &e" + kdr(plugin.clans().clanKdr(clan)), "&7Membros: &f" + clan.members().size()));
-        } else {
-            inv.setItem(13, item(Material.PLAYER_HEAD, "&f" + p.getName(), "&7Você ainda não pertence a uma clan."));
         }
         p.openInventory(inv);
     }
@@ -204,7 +199,7 @@ public final class ClanFeatureListener implements Listener {
         if (!authenticated(p)) { p.closeInventory(); return; }
         if (title.equals(clean(DASHBOARD))) {
             switch (event.getRawSlot()) {
-                case 11 -> { p.closeInventory(); openProfile(p); }
+                case 11 -> { }
                 case 12 -> {
                     Clan clan = plugin.clans().byPlayer(p.getUniqueId());
                     p.closeInventory();
