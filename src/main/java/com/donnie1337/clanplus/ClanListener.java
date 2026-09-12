@@ -10,6 +10,7 @@ import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.entity.PlayerDeathEvent;
 import org.bukkit.event.inventory.InventoryClickEvent;
+import org.bukkit.event.inventory.InventoryDragEvent;
 import org.bukkit.event.inventory.InventoryCloseEvent;
 import org.bukkit.event.player.AsyncPlayerChatEvent;
 import org.bukkit.event.player.PlayerCommandPreprocessEvent;
@@ -45,9 +46,9 @@ public final class ClanListener implements Listener {
         if (!LoginPlusHook.requireAuthentication(plugin, p)) { e.setCancelled(true); p.closeInventory(); return; }
         String title = clean(e.getView().getTitle());
         if (title.startsWith("Baú da clan:")) return;
+        e.setCancelled(true);
 
         if (title.equals("ᴄʟᴀɴ")) {
-            e.setCancelled(true);
             switch (e.getRawSlot()) {
                 case 11 -> { if (plugin.clans().byPlayer(p.getUniqueId()) == null) openCreateGui(p); else { p.closeInventory(); p.performCommand("clan menu"); } }
                 case 12 -> new ClanGui(plugin).openInvites(p);
@@ -61,14 +62,12 @@ public final class ClanListener implements Listener {
         }
 
         if (title.equals("Criar clan")) {
-            e.setCancelled(true);
             if (e.getRawSlot() == 13) { p.closeInventory(); startCreation(p); }
             else if (e.getRawSlot() == 22) p.closeInventory();
             return;
         }
 
         if (title.equals("Convites recebidos")) {
-            e.setCancelled(true);
             if (e.getRawSlot() == 49) { new ClanGui(plugin).openMain(p); return; }
             if (e.getRawSlot() < 0 || e.getRawSlot() >= e.getInventory().getSize()) return;
             if (e.getCurrentItem() == null || !e.getCurrentItem().hasItemMeta() || e.getCurrentItem().getItemMeta().getLore() == null) return;
@@ -82,13 +81,11 @@ public final class ClanListener implements Listener {
         }
 
         if (title.equals("Clans mais top") || title.equals("Clans do servidor") || title.equals("Ranking de KDR")) {
-            e.setCancelled(true);
             if (e.getRawSlot() == 49) new ClanGui(plugin).openMain(p);
             return;
         }
 
         if (title.equals("Membros da clan")) {
-            e.setCancelled(true);
             Clan c = plugin.clans().byPlayer(p.getUniqueId());
             if (c == null) { p.closeInventory(); return; }
             if (e.getRawSlot() == 49) { new ClanCommand(plugin).openMenu(p, c); return; }
@@ -110,7 +107,6 @@ public final class ClanListener implements Listener {
         }
 
         if (title.equals("Excluir clan")) {
-            e.setCancelled(true);
             Clan c = plugin.clans().byPlayer(p.getUniqueId());
             if (c == null || !c.owner().equals(p.getUniqueId())) { p.closeInventory(); return; }
             if (e.getRawSlot() == 15) { new ClanCommand(plugin).openMenu(p, c); return; }
@@ -120,7 +116,6 @@ public final class ClanListener implements Listener {
         }
 
         if (title.startsWith("Clan de ")) {
-            e.setCancelled(true);
             Clan c = plugin.clans().byPlayer(p.getUniqueId());
             if (c == null) { p.closeInventory(); return; }
             switch (e.getRawSlot()) {
@@ -136,11 +131,26 @@ public final class ClanListener implements Listener {
         }
 
         if (title.equals("Configuração da clan")) {
-            e.setCancelled(true); Clan c = plugin.clans().byPlayer(p.getUniqueId());
+            Clan c = plugin.clans().byPlayer(p.getUniqueId());
             if (c == null || !c.role(p.getUniqueId()).canManage()) { p.closeInventory(); return; }
             if (e.getRawSlot() == 11) { c.setFriendlyFire(!c.friendlyFire()); plugin.clans().save(); p.closeInventory(); p.performCommand("clan config"); }
             if (e.getRawSlot() == 15) { p.closeInventory(); p.performCommand("clan menu"); }
         }
+    }
+
+    @EventHandler
+    public void onDrag(InventoryDragEvent e) {
+        if (!(e.getWhoClicked() instanceof Player p)) return;
+        String title = clean(e.getView().getTitle());
+        if (title.startsWith("Baú da clan:")) return;
+        if (isClanGui(title)) e.setCancelled(true);
+    }
+
+    private boolean isClanGui(String title) {
+        return title.equals("ᴄʟᴀɴ") || title.equals("Criar clan") || title.equals("Convites recebidos") ||
+                title.equals("Clans mais top") || title.equals("Clans do servidor") || title.equals("Ranking de KDR") ||
+                title.equals("Membros da clan") || title.equals("Excluir clan") || title.startsWith("Clan de ") ||
+                title.equals("Configuração da clan");
     }
 
     private void openCreateGui(Player p) {
