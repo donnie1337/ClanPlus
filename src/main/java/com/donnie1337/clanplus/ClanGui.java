@@ -50,8 +50,7 @@ public final class ClanGui {
     }
 
     private void fill(Inventory inv, Material material) {
-        ItemStack filler = item(material, "&r");
-        for (int i = 0; i < inv.getSize(); i++) if (inv.getItem(i) == null) inv.setItem(i, filler);
+        // Sem vidro decorativo: os slots vazios permanecem vazios.
     }
 
     private String coins(Player player) {
