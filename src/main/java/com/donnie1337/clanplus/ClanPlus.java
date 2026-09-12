@@ -29,6 +29,8 @@ public final class ClanPlus extends JavaPlugin {
         if (admin != null) { ClanAdminCommand adminCommand = new ClanAdminCommand(this); admin.setExecutor(adminCommand); admin.setTabCompleter(adminCommand); }
         getServer().getPluginManager().registerEvents(new ClanListener(this), this);
         getServer().getPluginManager().registerEvents(new ClanFeatureListener(this), this);
+        long interval = 6000L;
+        getServer().getScheduler().runTaskTimer(this, () -> { if (clanManager != null) clanManager.save(); }, interval, interval);
         getLogger().info("ClanPlus habilitado com " + clanManager.all().size() + " clan(s).");
     }
 
