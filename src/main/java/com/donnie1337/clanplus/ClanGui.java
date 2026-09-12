@@ -241,7 +241,7 @@ public final class ClanGui {
 
     public void openMembers(Player p, Clan c) {
         Inventory inv = Bukkit.createInventory(null, 54, MEMBERS);
-        List<UUID> members = new ArrayList<>(c.members());
+        List<UUID> members = new ArrayList<>(c.members().keySet());
         members.sort(Comparator.comparing((UUID u) -> u.equals(c.owner()) ? 0 : 1).thenComparing(u -> String.valueOf(Bukkit.getOfflinePlayer(u).getName()), String.CASE_INSENSITIVE_ORDER));
         for (int i = 0; i < Math.min(45, members.size()); i++) {
             UUID uuid = members.get(i);
@@ -291,7 +291,6 @@ public final class ClanGui {
     private String roleName(ClanRole role) {
         return switch (role) {
             case LEADER -> "Líder";
-            case MANAGER -> "Gerente";
             case MODERATOR -> "Moderador";
             case MEMBER -> "Membro";
         };
