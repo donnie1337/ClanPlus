@@ -25,70 +25,291 @@ public final class ClanGui {
     public static final String MEMBERS = "§8Membros da clan";
     public static final String DELETE = "§8Excluir clan";
     private final ClanPlus plugin;
+
     public ClanGui(ClanPlus plugin) { this.plugin = plugin; }
+
     private String color(String s) { return ChatColor.translateAlternateColorCodes('&', s); }
-    private ItemStack item(Material material, String name, String... lore) { ItemStack stack = new ItemStack(material); ItemMeta meta = stack.getItemMeta(); meta.setDisplayName(color(name)); if (lore.length > 0) meta.setLore(java.util.Arrays.stream(lore).map(this::color).toList()); stack.setItemMeta(meta); return stack; }
+
+    private ItemStack item(Material material, String name, String... lore) {
+        ItemStack stack = new ItemStack(material);
+        ItemMeta meta = stack.getItemMeta();
+        meta.setDisplayName(color(name));
+        if (lore.length > 0) meta.setLore(java.util.Arrays.stream(lore).map(this::color).toList());
+        stack.setItemMeta(meta);
+        return stack;
+    }
+
+    private ItemStack playerHead(OfflinePlayer player, String name, String... lore) {
+        ItemStack stack = new ItemStack(Material.PLAYER_HEAD);
+        SkullMeta meta = (SkullMeta) stack.getItemMeta();
+        meta.setOwningPlayer(player);
+        meta.setDisplayName(color(name));
+        meta.setLore(java.util.Arrays.stream(lore).map(this::color).toList());
+        stack.setItemMeta(meta);
+        return stack;
+    }
+
+    private void fill(Inventory inv, Material material) {
+        ItemStack filler = item(material, "&r");
+        for (int i = 0; i < inv.getSize(); i++) if (inv.getItem(i) == null) inv.setItem(i, filler);
+    }
+
     private String coins(Player player) {
         String placeholder = plugin.getConfig().getString("coins.placeholder", "");
         if (placeholder == null || placeholder.isBlank() || !Bukkit.getPluginManager().isPluginEnabled("PlaceholderAPI")) return "N/D";
-        try { Class<?> clazz = Class.forName("me.clip.placeholderapi.PlaceholderAPI"); Method method = clazz.getMethod("setPlaceholders", OfflinePlayer.class, String.class); String value = String.valueOf(method.invoke(null, player, placeholder)); return value.equals(placeholder) ? "N/D" : value; }
-        catch (ReflectiveOperationException ex) { return "N/D"; }
+        try {
+            Class<?> clazz = Class.forName("me.clip.placeholderapi.PlaceholderAPI");
+            Method method = clazz.getMethod("setPlaceholders", OfflinePlayer.class, String.class);
+            String value = String.valueOf(method.invoke(null, player, placeholder));
+            return value.equals(placeholder) ? "N/D" : value;
+        } catch (ReflectiveOperationException ex) {
+            return "N/D";
+        }
     }
+
+    private String kdr(double value) { return String.format(Locale.US, "%.2f", value); }
+
     public void openMain(Player p) {
         Inventory inv = Bukkit.createInventory(null, 27, MAIN);
         Clan c = plugin.clans().byPlayer(p.getUniqueId());
-        double kdr = plugin.clans().kdr(p.getUniqueId());
-        String clanName = c == null ? "Nenhum" : c.name();
+        double playerKdr = plugin.clans().kdr(p.getUniqueId());
+        String clanName = c == null ? "Nenhuma" : c.name();
         String tag = c == null ? "Nenhuma" : c.tag();
         String role = c == null ? "Nenhum" : roleName(c.role(p.getUniqueId()));
-        ItemStack profile = new ItemStack(Material.PLAYER_HEAD);
-        SkullMeta skull = (SkullMeta) profile.getItemMeta();
-        skull.setOwningPlayer(p);
-        skull.setDisplayName(color("&b&l" + p.getName()));
-        skull.setLore(List.of(
-                color("&7Clan: &f" + clanName),
-                color("&7Tag: &f" + tag),
-                color("&7Cargo: &f" + role),
-                color("&7KDR: &e" + String.format(Locale.US, "%.2f", kdr)),
-                color("&7Coins: &6" + coins(p))
-        ));
-        profile.setItemMeta(skull);
+        int kills = plugin.clans().kills(p.getUniqueId());
+        int deaths = plugin.clans().deaths(p.getUniqueId());
+
+        ItemStack profile = playerHead(p, "&3&l" + p.getName(),
+                "&8&m--------------------",
+                "&7Seu perfil no sistema de clans",
+                "",
+                "&3▪ &7Clan: &f" + clanName,
+                "&3▪ &7Tag: &f" + tag,
+                "&3▪ &7Cargo: &f" + role,
+                "&3▪ &7KDR: &e" + kdr(playerKdr),
+                "&3▪ &7Abates: &a" + kills,
+                "&3▪ &7Mortes: &c" + deaths,
+                "&3▪ &7Coins: &6" + coins(p),
+                "",
+                "&8Seu desempenho é atualizado automaticamente.");
         inv.setItem(10, profile);
-        inv.setItem(11, item(c == null ? Material.EMERALD : Material.CHEST, c == null ? "&aCriar Clan" : "&bMeu Clan", c == null ? "&7Crie seu próprio clan." : "&7Gerencie seu clan."));
-        inv.setItem(13, item(Material.WRITABLE_BOOK, "&eConvites recebidos", "&7Veja e aceite seus convites."));
-        inv.setItem(14, item(Material.NETHER_STAR, "&6Clans mais Top", "&7Ranking baseado no KDR médio", "&7dos jogadores de cada clan."));
-        inv.setItem(16, item(Material.NAME_TAG, "&fClans do servidor", "&7Veja todos os clans existentes."));
+
+        if (c == null) {
+            inv.setItem(11, item(Material.EMERALD, "&a&lCriar Clan",
+                    "&8&m--------------------",
+                    "&7Crie sua própria clan e comece",
+                    "&7a construir sua história no servidor.",
+                    "",
+                    "&3▪ &7Defina um nome exclusivo",
+                    "&3▪ &7Escolha uma TAG de 3 letras",
+                    "&3▪ &7Convide seus amigos",
+                    "",
+                    "&aClique para começar"));
+        } else {
+            inv.setItem(11, item(Material.CHEST, "&b&lMeu Clan",
+                    "&8&m--------------------",
+                    "&7Acesse o painel completo da sua clan.",
+                    "",
+                    "&3▪ &7Clan: &f" + c.name(),
+                    "&3▪ &7TAG: &f" + c.tag(),
+                    "&3▪ &7Seu cargo: &f" + role,
+                    "&3▪ &7Membros: &f" + c.members().size(),
+                    "&3▪ &7Online: &a" + c.onlineCount(),
+                    "&3▪ &7KDR médio: &e" + kdr(plugin.clans().clanKdr(c)),
+                    "",
+                    "&bClique para gerenciar"));
+        }
+
+        inv.setItem(13, item(Material.WRITABLE_BOOK, "&e&lConvites recebidos",
+                "&8&m--------------------",
+                "&7Consulte os convites enviados",
+                "&7para você por outras clans.",
+                "",
+                "&3▪ &7Aceite convites pendentes",
+                "&3▪ &7Recuse convites indesejados",
+                "&3▪ &7Veja líder, TAG e ID do convite",
+                "",
+                "&eClique para visualizar"));
+
+        inv.setItem(14, item(Material.NETHER_STAR, "&6&lClans mais Top",
+                "&8&m--------------------",
+                "&7Ranking das clans com melhor",
+                "&7desempenho médio de KDR.",
+                "",
+                "&3▪ &7Posição no ranking",
+                "&3▪ &7KDR médio da clan",
+                "&3▪ &7Quantidade de membros",
+                "",
+                "&6Clique para ver o ranking"));
+
+        inv.setItem(16, item(Material.NAME_TAG, "&f&lClans do servidor",
+                "&8&m--------------------",
+                "&7Veja as clans existentes no servidor",
+                "&7e conheça seus principais dados.",
+                "",
+                "&3▪ &7Nome e TAG",
+                "&3▪ &7Líder da clan",
+                "&3▪ &7Membros e jogadores online",
+                "&3▪ &7KDR médio",
+                "",
+                "&fClique para explorar"));
+
+        fill(inv, Material.BLACK_STAINED_GLASS_PANE);
+        inv.setItem(10, profile);
+        inv.setItem(11, c == null ? item(Material.EMERALD, "&a&lCriar Clan",
+                "&8&m--------------------", "&7Crie sua própria clan e comece", "&7a construir sua história no servidor.", "", "&3▪ &7Defina um nome exclusivo", "&3▪ &7Escolha uma TAG de 3 letras", "&3▪ &7Convide seus amigos", "", "&aClique para começar") : item(Material.CHEST, "&b&lMeu Clan",
+                "&8&m--------------------", "&7Acesse o painel completo da sua clan.", "", "&3▪ &7Clan: &f" + c.name(), "&3▪ &7TAG: &f" + c.tag(), "&3▪ &7Seu cargo: &f" + role, "&3▪ &7Membros: &f" + c.members().size(), "&3▪ &7Online: &a" + c.onlineCount(), "&3▪ &7KDR médio: &e" + kdr(plugin.clans().clanKdr(c)), "", "&bClique para gerenciar"));
+        inv.setItem(13, item(Material.WRITABLE_BOOK, "&e&lConvites recebidos", "&8&m--------------------", "&7Consulte os convites enviados", "&7para você por outras clans.", "", "&3▪ &7Aceite convites pendentes", "&3▪ &7Recuse convites indesejados", "&3▪ &7Veja líder, TAG e ID do convite", "", "&eClique para visualizar"));
+        inv.setItem(14, item(Material.NETHER_STAR, "&6&lClans mais Top", "&8&m--------------------", "&7Ranking das clans com melhor", "&7desempenho médio de KDR.", "", "&3▪ &7Posição no ranking", "&3▪ &7KDR médio da clan", "&3▪ &7Quantidade de membros", "", "&6Clique para ver o ranking"));
+        inv.setItem(16, item(Material.NAME_TAG, "&f&lClans do servidor", "&8&m--------------------", "&7Veja as clans existentes no servidor", "&7e conheça seus principais dados.", "", "&3▪ &7Nome e TAG", "&3▪ &7Líder da clan", "&3▪ &7Membros e jogadores online", "&3▪ &7KDR médio", "", "&fClique para explorar"));
         p.openInventory(inv);
     }
+
     public void openInvites(Player p) {
-        Inventory inv = Bukkit.createInventory(null, 54, INVITES); plugin.clans().cleanupExpiredInvites(); int slot = 0;
-        for (Clan c : plugin.clans().all()) for (Clan.Invite invite : c.invites().values()) if (invite.player().equals(p.getUniqueId()) && slot < 45) inv.setItem(slot++, item(Material.PAPER, "&eConvite: &f" + c.name(), "&7Tag: &6" + c.tag(), "&7Líder: &f" + name(c.owner()), "&7ID: &e" + invite.id(), "", "&aClique para aceitar", "&cShift + clique para recusar"));
-        if (slot == 0) inv.setItem(22, item(Material.BARRIER, "&cNenhum convite", "&7Você não possui convites pendentes.")); inv.setItem(49, item(Material.ARROW, "&7Voltar")); p.openInventory(inv);
+        Inventory inv = Bukkit.createInventory(null, 54, INVITES);
+        plugin.clans().cleanupExpiredInvites();
+        int slot = 0;
+        for (Clan c : plugin.clans().all()) for (Clan.Invite invite : c.invites().values()) {
+            if (!invite.player().equals(p.getUniqueId()) || slot >= 45) continue;
+            inv.setItem(slot++, item(Material.PAPER, "&e&lConvite de &f" + c.name(),
+                    "&8&m--------------------",
+                    "&3▪ &7TAG: &f" + c.tag(),
+                    "&3▪ &7Líder: &f" + name(c.owner()),
+                    "&3▪ &7Membros: &f" + c.members().size(),
+                    "&3▪ &7KDR médio: &e" + kdr(plugin.clans().clanKdr(c)),
+                    "&3▪ &7ID: &e" + invite.id(),
+                    "",
+                    "&aClique para aceitar",
+                    "&cShift + clique para recusar"));
+        }
+        if (slot == 0) inv.setItem(22, item(Material.BARRIER, "&c&lNenhum convite", "&7Você não possui convites pendentes.", "", "&8Quando alguém convidar você,", "&8o convite aparecerá aqui."));
+        fill(inv, Material.BLACK_STAINED_GLASS_PANE);
+        if (slot == 0) inv.setItem(22, item(Material.BARRIER, "&c&lNenhum convite", "&7Você não possui convites pendentes.", "", "&8Quando alguém convidar você,", "&8o convite aparecerá aqui."));
+        inv.setItem(49, item(Material.ARROW, "&7&lVoltar", "&8Retorna ao painel principal."));
+        p.openInventory(inv);
     }
+
     public void openTop(Player p) {
-        Inventory inv = Bukkit.createInventory(null, 54, TOP); List<Clan> clans = new ArrayList<>(plugin.clans().all()); clans.sort(Comparator.comparingDouble((Clan c) -> plugin.clans().clanKdr(c)).reversed());
-        for (int i = 0; i < Math.min(45, clans.size()); i++) { Clan c = clans.get(i); inv.setItem(i, item(i == 0 ? Material.GOLD_BLOCK : i == 1 ? Material.IRON_BLOCK : i == 2 ? Material.COPPER_BLOCK : Material.NAME_TAG, "&e#" + (i + 1) + " &f" + c.name() + " &8[&6" + c.tag() + "&8]", "&7KDR médio: &e" + String.format(Locale.US, "%.2f", plugin.clans().clanKdr(c)), "&7Membros: &f" + c.members().size())); }
-        inv.setItem(49, item(Material.ARROW, "&7Voltar")); p.openInventory(inv);
+        Inventory inv = Bukkit.createInventory(null, 54, TOP);
+        List<Clan> clans = new ArrayList<>(plugin.clans().all());
+        clans.sort(Comparator.comparingDouble((Clan c) -> plugin.clans().clanKdr(c)).reversed());
+        for (int i = 0; i < Math.min(45, clans.size()); i++) {
+            Clan c = clans.get(i);
+            Material material = i == 0 ? Material.GOLD_BLOCK : i == 1 ? Material.IRON_BLOCK : i == 2 ? Material.COPPER_BLOCK : Material.NAME_TAG;
+            inv.setItem(i, item(material, (i == 0 ? "&6&l#" : i == 1 ? "&f&l#" : i == 2 ? "&c&l#" : "&7#") + (i + 1) + " &f" + c.name(),
+                    "&8&m--------------------",
+                    "&3▪ &7TAG: &f" + c.tag(),
+                    "&3▪ &7Líder: &f" + name(c.owner()),
+                    "&3▪ &7Membros: &f" + c.members().size(),
+                    "&3▪ &7Online: &a" + c.onlineCount(),
+                    "&3▪ &7KDR médio: &e" + kdr(plugin.clans().clanKdr(c)),
+                    "",
+                    i == 0 ? "&6★ Clan líder do ranking" : "&7Posição &f#" + (i + 1)));
+        }
+        fill(inv, Material.BLACK_STAINED_GLASS_PANE);
+        inv.setItem(49, item(Material.ARROW, "&7&lVoltar", "&8Retorna ao painel principal."));
+        p.openInventory(inv);
     }
+
     public void openAll(Player p) {
-        Inventory inv = Bukkit.createInventory(null, 54, ALL); int slot = 0;
-        for (Clan c : plugin.clans().all()) { if (slot >= 45) break; inv.setItem(slot++, item(Material.NAME_TAG, "&f" + c.name() + " &8[&6" + c.tag() + "&8]", "&7Líder: &f" + name(c.owner()), "&7Membros: &f" + c.members().size(), "&7Online: &f" + c.onlineCount(), "&7KDR médio: &e" + String.format(Locale.US, "%.2f", plugin.clans().clanKdr(c)))); }
-        if (slot == 0) inv.setItem(22, item(Material.BARRIER, "&cNenhum clan", "&7Ainda não existem clans.")); inv.setItem(49, item(Material.ARROW, "&7Voltar")); p.openInventory(inv);
+        Inventory inv = Bukkit.createInventory(null, 54, ALL);
+        int slot = 0;
+        for (Clan c : plugin.clans().all()) {
+            if (slot >= 45) break;
+            inv.setItem(slot++, item(Material.NAME_TAG, "&f&l" + c.name(),
+                    "&8&m--------------------",
+                    "&3▪ &7TAG: &f" + c.tag(),
+                    "&3▪ &7Líder: &f" + name(c.owner()),
+                    "&3▪ &7Membros: &f" + c.members().size(),
+                    "&3▪ &7Online: &a" + c.onlineCount(),
+                    "&3▪ &7KDR médio: &e" + kdr(plugin.clans().clanKdr(c)),
+                    "",
+                    "&8Clique para ver os detalhes da clan."));
+        }
+        if (slot == 0) inv.setItem(22, item(Material.BARRIER, "&c&lNenhum clan", "&7Ainda não existem clans no servidor."));
+        fill(inv, Material.BLACK_STAINED_GLASS_PANE);
+        if (slot == 0) inv.setItem(22, item(Material.BARRIER, "&c&lNenhum clan", "&7Ainda não existem clans no servidor."));
+        inv.setItem(49, item(Material.ARROW, "&7&lVoltar", "&8Retorna ao painel principal."));
+        p.openInventory(inv);
     }
+
     public void openKdr(Player p) {
-        Inventory inv = Bukkit.createInventory(null, 54, "§8Ranking de KDR"); List<UUID> players = new ArrayList<>(plugin.clans().statsPlayers()); players.sort(Comparator.comparingDouble((UUID u) -> plugin.clans().kdr(u)).reversed());
-        for (int i = 0; i < Math.min(45, players.size()); i++) { UUID uuid = players.get(i); OfflinePlayer target = Bukkit.getOfflinePlayer(uuid); Clan c = plugin.clans().byPlayer(uuid); inv.setItem(i, item(Material.PLAYER_HEAD, "&e#" + (i + 1) + " &f" + String.valueOf(target.getName()), "&7Clan: &f" + (c == null ? "Nenhum" : c.name() + " [" + c.tag() + "]"), "&7KDR: &e" + String.format(Locale.US, "%.2f", plugin.clans().kdr(uuid)), "&7Kills: &a" + plugin.clans().kills(uuid), "&7Mortes: &c" + plugin.clans().deaths(uuid))); }
-        inv.setItem(49, item(Material.ARROW, "&7Voltar")); p.openInventory(inv);
+        Inventory inv = Bukkit.createInventory(null, 54, "§8Ranking de KDR");
+        List<UUID> players = new ArrayList<>(plugin.clans().statsPlayers());
+        players.sort(Comparator.comparingDouble((UUID u) -> plugin.clans().kdr(u)).reversed());
+        for (int i = 0; i < Math.min(45, players.size()); i++) {
+            UUID uuid = players.get(i);
+            OfflinePlayer target = Bukkit.getOfflinePlayer(uuid);
+            Clan c = plugin.clans().byPlayer(uuid);
+            inv.setItem(i, playerHead(target, "&e&l#" + (i + 1) + " &f" + String.valueOf(target.getName()),
+                    "&8&m--------------------",
+                    "&3▪ &7Clan: &f" + (c == null ? "Nenhuma" : c.name()),
+                    "&3▪ &7TAG: &f" + (c == null ? "Nenhuma" : c.tag()),
+                    "&3▪ &7KDR: &e" + kdr(plugin.clans().kdr(uuid)),
+                    "&3▪ &7Abates: &a" + plugin.clans().kills(uuid),
+                    "&3▪ &7Mortes: &c" + plugin.clans().deaths(uuid),
+                    "",
+                    "&8Estatísticas registradas pelo ClanPlus."));
+        }
+        fill(inv, Material.BLACK_STAINED_GLASS_PANE);
+        inv.setItem(49, item(Material.ARROW, "&7&lVoltar", "&8Retorna ao painel principal."));
+        p.openInventory(inv);
     }
+
     public void openMembers(Player p, Clan c) {
-        Inventory inv = Bukkit.createInventory(null, 54, MEMBERS); int slot = 0;
-        for (UUID uuid : c.members().keySet()) { if (slot >= 45) break; OfflinePlayer target = Bukkit.getOfflinePlayer(uuid); String role = roleName(c.role(uuid)); List<String> lore = new ArrayList<>(); lore.add("&7Cargo: &f" + role); lore.add("&7KDR: &e" + String.format(Locale.US, "%.2f", plugin.clans().kdr(uuid))); if (uuid.equals(c.owner())) lore.add("&8Líder não pode ser expulso"); else if (c.role(p.getUniqueId()) != null && c.role(p.getUniqueId()).canManage()) lore.add("&cClique para expulsar"); inv.setItem(slot++, playerHead(target, "&f" + name(uuid), lore.toArray(new String[0]))); }
-        inv.setItem(49, item(Material.ARROW, "&7Voltar")); if (slot == 0) inv.setItem(22, item(Material.BARRIER, "&cNenhum membro")); p.openInventory(inv);
+        Inventory inv = Bukkit.createInventory(null, 54, MEMBERS);
+        int slot = 0;
+        for (UUID uuid : c.members().keySet()) {
+            if (slot >= 45) break;
+            OfflinePlayer target = Bukkit.getOfflinePlayer(uuid);
+            String role = roleName(c.role(uuid));
+            List<String> lore = new ArrayList<>();
+            lore.add("&8&m--------------------");
+            lore.add("&3▪ &7Cargo: &f" + role);
+            lore.add("&3▪ &7KDR: &e" + kdr(plugin.clans().kdr(uuid)));
+            lore.add("&3▪ &7Abates: &a" + plugin.clans().kills(uuid));
+            lore.add("&3▪ &7Mortes: &c" + plugin.clans().deaths(uuid));
+            lore.add("&3▪ &7Status: &f" + (target.isOnline() ? "&aOnline" : "&8Offline"));
+            lore.add("");
+            if (uuid.equals(c.owner())) lore.add("&6★ Líder da clan");
+            else if (c.role(p.getUniqueId()) != null && c.role(p.getUniqueId()).canManage()) lore.add("&cClique para expulsar este membro");
+            inv.setItem(slot++, playerHead(target, "&f&l" + name(uuid), lore.toArray(new String[0])));
+        }
+        if (slot == 0) inv.setItem(22, item(Material.BARRIER, "&c&lNenhum membro", "&7A clan ainda não possui membros."));
+        fill(inv, Material.BLACK_STAINED_GLASS_PANE);
+        if (slot == 0) inv.setItem(22, item(Material.BARRIER, "&c&lNenhum membro", "&7A clan ainda não possui membros."));
+        inv.setItem(49, item(Material.ARROW, "&7&lVoltar", "&8Retorna ao menu da clan."));
+        p.openInventory(inv);
     }
+
     public void openDelete(Player p, Clan c) {
-        Inventory inv = Bukkit.createInventory(null, 27, DELETE); inv.setItem(11, item(Material.GREEN_WOOL, "&aConfirmar exclusão", c.members().size() == 1 ? "&7O clan será excluído permanentemente." : "&cExpulse todos os outros membros primeiro.", "&cEsta ação não pode ser desfeita.")); inv.setItem(15, item(Material.RED_WOOL, "&cCancelar", "&7Voltar ao menu da clan.")); p.openInventory(inv);
+        Inventory inv = Bukkit.createInventory(null, 27, DELETE);
+        boolean canDelete = c.members().size() == 1;
+        inv.setItem(11, item(canDelete ? Material.GREEN_WOOL : Material.GRAY_WOOL, canDelete ? "&a&lConfirmar exclusão" : "&7&lExclusão bloqueada",
+                "&8&m--------------------",
+                canDelete ? "&7A clan será excluída permanentemente." : "&cAinda existem outros membros na clan.",
+                canDelete ? "&cEsta ação não pode ser desfeita." : "&cExpulse todos os membros primeiro.",
+                "",
+                canDelete ? "&aClique para confirmar" : "&8Opção indisponível"));
+        inv.setItem(15, item(Material.RED_WOOL, "&c&lCancelar", "&7Voltar ao menu da clan.", "", "&cNenhuma alteração será feita."));
+        fill(inv, Material.BLACK_STAINED_GLASS_PANE);
+        inv.setItem(11, item(canDelete ? Material.GREEN_WOOL : Material.GRAY_WOOL, canDelete ? "&a&lConfirmar exclusão" : "&7&lExclusão bloqueada",
+                "&8&m--------------------", canDelete ? "&7A clan será excluída permanentemente." : "&cAinda existem outros membros na clan.", canDelete ? "&cEsta ação não pode ser desfeita." : "&cExpulse todos os membros primeiro.", "", canDelete ? "&aClique para confirmar" : "&8Opção indisponível"));
+        inv.setItem(15, item(Material.RED_WOOL, "&c&lCancelar", "&7Voltar ao menu da clan.", "", "&cNenhuma alteração será feita."));
+        p.openInventory(inv);
     }
-    private ItemStack playerHead(OfflinePlayer player, String name, String... lore) { ItemStack stack = new ItemStack(Material.PLAYER_HEAD); SkullMeta meta = (SkullMeta) stack.getItemMeta(); meta.setOwningPlayer(player); meta.setDisplayName(color(name)); meta.setLore(java.util.Arrays.stream(lore).map(this::color).toList()); stack.setItemMeta(meta); return stack; }
-    private String name(UUID uuid) { String name = Bukkit.getOfflinePlayer(uuid).getName(); return name == null ? uuid.toString().substring(0, 8) : name; }
-    private String roleName(ClanRole role) { if (role == null) return "Nenhum"; return switch (role) { case LEADER -> "Líder"; case MODERATOR -> "Moderador"; case MEMBER -> "Membro"; }; }
+
+    private String name(UUID uuid) {
+        String name = Bukkit.getOfflinePlayer(uuid).getName();
+        return name == null ? uuid.toString().substring(0, 8) : name;
+    }
+
+    private String roleName(ClanRole role) {
+        if (role == null) return "Nenhum";
+        return switch (role) {
+            case LEADER -> "Líder";
+            case MODERATOR -> "Moderador";
+            case MEMBER -> "Membro";
+        };
+    }
 }
