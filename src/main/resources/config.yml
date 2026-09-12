@@ -1,16 +1,55 @@
+# ╔══════════════════════════════════════════════════════════════╗
+# ║                         CLANPLUS                             ║
+# ║              Configuração do sistema de clans              ║
+# ╚══════════════════════════════════════════════════════════════╝
+
+# ──────────────────────────────────────────────────────────────
+# CONFIGURAÇÕES DOS CLANS
+# ──────────────────────────────────────────────────────────────
 clan:
+  # Quantidade mínima de caracteres no nome do clan.
   name-min-length: 3
+
+  # Quantidade máxima de caracteres no nome do clan.
   name-max-length: 16
+
+  # A TAG deve possuir exatamente 3 letras.
   tag-min-length: 3
   tag-max-length: 3
+
+  # Número máximo de jogadores que podem fazer parte de um clan.
   max-members: 30
+
+  # Tempo, em minutos, até um convite recebido expirar.
   invite-expiration-minutes: 10
+
+  # Permite que membros utilizem o baú compartilhado do clan.
   allow-member-chest: true
+
+  # Permite que membros utilizem a home do clan.
   allow-member-home: true
+
+  # Quando ativado, o jogador convidado precisa estar online.
   require-online-target-for-invite: true
+
+# ──────────────────────────────────────────────────────────────
+# ECONOMIA
+# ──────────────────────────────────────────────────────────────
 coins:
+  # Placeholder usado para mostrar as moedas/saldo do jogador.
+  # Padrão: saldo do Vault através do PlaceholderAPI.
   placeholder: '%vault_eco_balance_fixed%'
+
+# ──────────────────────────────────────────────────────────────
+# ARMAZENAMENTO
+# ──────────────────────────────────────────────────────────────
 storage:
+  # Arquivo onde os clans, membros, convites e estatísticas são salvos.
   file: clans.yml
+
+# ──────────────────────────────────────────────────────────────
+# TELEPORTE
+# ──────────────────────────────────────────────────────────────
 teleport:
+  # Tempo de espera, em segundos, antes de teleportar para a home do clan.
   warmup-seconds: 3
