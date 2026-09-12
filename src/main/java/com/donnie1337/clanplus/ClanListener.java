@@ -15,7 +15,6 @@ import org.bukkit.event.player.AsyncPlayerChatEvent;
 import org.bukkit.event.player.PlayerCommandPreprocessEvent;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.meta.SkullMeta;
-
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
@@ -31,7 +30,7 @@ public final class ClanListener implements Listener {
 
     @EventHandler public void onDeath(PlayerDeathEvent e){Player victim=e.getEntity();if(LoginPlusHook.isAuthenticated(victim))plugin.clans().recordDeath(victim.getUniqueId());Player killer=victim.getKiller();if(killer!=null&&!killer.getUniqueId().equals(victim.getUniqueId())&&LoginPlusHook.isAuthenticated(killer))plugin.clans().recordKill(killer.getUniqueId());}
 
-    @EventHandler public void onClick(InventoryClickEvent e){
+    @EventHandler(ignoreCancelled=true) public void onClick(InventoryClickEvent e){
         if(!(e.getWhoClicked() instanceof Player p))return;
         Inventory top=e.getView().getTopInventory();
         if(plugin.isManagedClanChest(top)){
