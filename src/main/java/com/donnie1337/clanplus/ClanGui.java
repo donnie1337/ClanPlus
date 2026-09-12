@@ -53,7 +53,7 @@ public final class ClanGui {
                 color("&7Coins: &6" + coins(p))
         ));
         profile.setItemMeta(skull);
-        inv.setItem(17, profile);
+        inv.setItem(10, profile);
         inv.setItem(11, item(c == null ? Material.EMERALD : Material.CHEST, c == null ? "&aCriar Clan" : "&bMeu Clan", c == null ? "&7Crie seu próprio clan." : "&7Gerencie seu clan."));
         inv.setItem(13, item(Material.WRITABLE_BOOK, "&eConvites recebidos", "&7Veja e aceite seus convites."));
         inv.setItem(14, item(Material.NETHER_STAR, "&6Clans mais Top", "&7Ranking baseado no KDR médio", "&7dos jogadores de cada clan."));
