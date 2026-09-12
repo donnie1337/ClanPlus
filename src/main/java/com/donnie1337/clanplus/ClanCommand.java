@@ -32,7 +32,7 @@ public final class ClanCommand implements CommandExecutor, TabCompleter {
 
     @Override public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
         Player p = player(sender); if (p == null) return true;
-        if (args.length == 0) { panel(p); return true; }
+        if (args.length == 0) { new ClanGui(plugin).openMain(p); return true; }
         String sub = args[0].toLowerCase(Locale.ROOT);
         Clan c = clan(p);
         switch (sub) {
@@ -56,63 +56,42 @@ public final class ClanCommand implements CommandExecutor, TabCompleter {
             case "bau" -> chest(p, c);
             case "sethome" -> setHome(p, c);
             case "home" -> home(p, c);
-            default -> panel(p);
+            default -> new ClanGui(plugin).openMain(p);
         }
         return true;
     }
 
-    private void panel(Player p) {
-        Clan c = clan(p);
-        p.sendMessage(title("&6&lᴄʟᴀɴ &8• &fPainel da clan"));
-        if (c == null) {
-            p.sendMessage(title("&7Você não está em uma clan."));
-            p.sendMessage(title("&e/clan criar <nome> [tag] &8• &7Criar uma clan"));
-            p.sendMessage(title("&e/clans &8• &7Ver clans do servidor"));
-            p.sendMessage(title("&e/clan convites &8• &7Ver convites recebidos"));
-            return;
-        }
-        p.sendMessage(title("&7Clan: &f" + c.name() + " &8[&6" + c.tag() + "&8]"));
-        p.sendMessage(title("&e/clan menu &8• &7Abrir menu"));
-        p.sendMessage(title("&e/clan info &8• &7Informações"));
-        p.sendMessage(title("&e/clan online &8• &7Membros online"));
-        p.sendMessage(title("&e/clan chat <mensagem> &8• &7Chat da clan"));
-        p.sendMessage(title("&e/clan bau &8• &7Baú comunitário"));
-        p.sendMessage(title("&e/clan home &8• &7Ir para a home"));
-        if (manager(p, c)) p.sendMessage(title("&7Gerenciamento: &e/clan config &8• &e/clan sethome"));
-    }
-
+    private void panel(Player p) { new ClanGui(plugin).openMain(p); }
     private void create(Player p, String[] a) {
         if (clan(p) != null) { send(p, "already-clan"); return; }
         if (a.length < 2) { send(p, "usage-create"); return; }
-        String name = a[1]; String tag = a.length > 2 ? a[2] : name.substring(0, Math.min(name.length(), plugin.getConfig().getInt("clan.tag-max-length", 6)));
+        String name = a[1];
+        String tag = a.length > 2 ? a[2] : "";
         int min = plugin.getConfig().getInt("clan.name-min-length", 3), max = plugin.getConfig().getInt("clan.name-max-length", 16);
-        int tmin = plugin.getConfig().getInt("clan.tag-min-length", 2), tmax = plugin.getConfig().getInt("clan.tag-max-length", 6);
         if (!name.matches("[A-Za-z0-9_\\-]+") || name.length() < min || name.length() > max) { p.sendMessage(title("&cNome inválido. Use " + min + "-" + max + " caracteres, letras, números, _ ou - .")); return; }
-        if (!tag.matches("[A-Za-z0-9_\\-]+") || tag.length() < tmin || tag.length() > tmax) { p.sendMessage(title("&cTag inválida. Use " + tmin + "-" + tmax + " caracteres.")); return; }
+        if (!tag.matches("[A-Z]{3}")) { p.sendMessage(plugin.msg("invalid-tag")); return; }
         if (plugin.clans().nameTaken(name)) { p.sendMessage(title("&cJá existe uma clan com esse nome.")); return; }
         if (plugin.clans().tagTaken(tag)) { p.sendMessage(title("&cEssa tag já está sendo usada.")); return; }
         Clan c = plugin.clans().create(name, tag, p.getUniqueId()); send(p, "created", "%name%", c.name(), "%tag%", c.tag());
     }
-
     private void delete(Player p, Clan c) { if (c == null) { send(p, "no-clan"); return; } if (!leader(p,c)) { send(p,"only-leader"); return; } plugin.clans().delete(c); send(p,"deleted","%name%",c.name()); }
     private void leave(Player p, Clan c) { if (c == null) { send(p,"no-clan"); return; } if (leader(p,c)) { if (c.members().size() > 1) p.sendMessage(title("&cTransfira a posse ou exclua a clan antes de sair.")); else { plugin.clans().delete(c); send(p,"deleted","%name%",c.name()); } return; } c.members().remove(p.getUniqueId()); plugin.clans().save(); send(p,"left"); }
-    private void online(Player p, Clan c) { if (c == null) { send(p,"no-clan"); return; } p.sendMessage(title("&6&lᴄʟᴀɴ &8• &7Membros online: &f" + c.onlineCount())); c.members().keySet().stream().map(Bukkit::getPlayer).filter(x -> x != null).forEach(x -> p.sendMessage(title("&8• &f" + x.getName() + " &7(" + c.role(x.getUniqueId()).name().toLowerCase() + ")"))); }
-
+    private void online(Player p, Clan c) { if (c == null) { send(p,"no-clan"); return; } p.sendMessage(title("&8&lᴄʟᴀɴ &8• &7Membros online: &f" + c.onlineCount())); c.members().keySet().stream().map(Bukkit::getPlayer).filter(x -> x != null).forEach(x -> p.sendMessage(title("&8• &f" + x.getName() + " &7(" + c.role(x.getUniqueId()).name().toLowerCase() + ")"))); }
     private Player target(String name) { return Bukkit.getPlayerExact(name); }
     private void kick(Player p, Clan c, String[] a) { if (!manager(p,c)) { send(p,"only-leader-mod"); return; } if (a.length < 2) { send(p,"usage-target"); return; } Player t=target(a[1]); if(t==null){send(p,"player-not-found");return;} if(!c.hasMember(t.getUniqueId())||t.getUniqueId().equals(c.owner())){p.sendMessage(title("&cJogador não pode ser expulso."));return;} if(!leader(p,c)&&c.role(t.getUniqueId())!=ClanRole.MEMBER){p.sendMessage(title("&cModeradores só podem expulsar membros."));return;} c.members().remove(t.getUniqueId()); plugin.clans().save(); send(p,"member-kicked","%player%",t.getName()); if(t.isOnline()) send(t,"member-kicked","%player%",p.getName()); }
     private void promote(Player p, Clan c, String[] a) { if(!leader(p,c)){send(p,"only-leader");return;} if(a.length<2){send(p,"usage-target");return;} Player t=target(a[1]); if(t==null||!c.hasMember(t.getUniqueId())){send(p,"player-not-found");return;} if(c.role(t.getUniqueId())==ClanRole.MEMBER){c.members().put(t.getUniqueId(),ClanRole.MODERATOR);plugin.clans().save();send(p,"promoted","%player%",t.getName());} else p.sendMessage(title("&cEsse jogador já possui o maior cargo possível.")); }
     private void demote(Player p, Clan c, String[] a) { if(!leader(p,c)){send(p,"only-leader");return;} if(a.length<2){send(p,"usage-target");return;} Player t=target(a[1]); if(t==null||!c.hasMember(t.getUniqueId())){send(p,"player-not-found");return;} if(c.role(t.getUniqueId())==ClanRole.MODERATOR){c.members().put(t.getUniqueId(),ClanRole.MEMBER);plugin.clans().save();send(p,"demoted","%player%",t.getName());} else p.sendMessage(title("&cEsse jogador não é moderador.")); }
     private void transfer(Player p, Clan c, String[] a) { if(!leader(p,c)){send(p,"only-leader");return;} if(a.length<2){send(p,"usage-target");return;} Player t=target(a[1]); if(t==null||!c.hasMember(t.getUniqueId())){send(p,"player-not-found");return;} c.members().put(p.getUniqueId(),ClanRole.MODERATOR); c.setOwner(t.getUniqueId()); plugin.clans().save(); send(p,"transferred","%player%",t.getName()); send(t,"transferred","%player%",t.getName()); }
     private void invite(Player p, Clan c, String[] a) { if(!manager(p,c)){send(p,"only-leader-mod");return;} if(a.length<2){send(p,"usage-target");return;} Player t=target(a[1]); if(t==null){send(p,"player-not-found");return;} if(plugin.clans().byPlayer(t.getUniqueId())!=null){p.sendMessage(title("&cEsse jogador já está em uma clan."));return;} if(c.members().size()>=plugin.getConfig().getInt("clan.max-members",30)){p.sendMessage(title("&cA clan atingiu o limite de membros."));return;} int id=plugin.clans().nextInviteId(c); long exp=System.currentTimeMillis()+plugin.getConfig().getLong("clan.invite-expiration-minutes",10)*60000L; c.invites().put(id,new Clan.Invite(id,t.getUniqueId(),exp));plugin.clans().save();send(p,"invite-sent","%player%",t.getName(),"%id%",String.valueOf(id));send(t,"invite-received","%name%",c.name(),"%tag%",c.tag(),"%id%",String.valueOf(id)); }
-    private void invites(Player p) { plugin.clans().cleanupExpiredInvites(); boolean found=false; for(Clan c:plugin.clans().all()) for(Clan.Invite i:c.invites().values()) if(i.player().equals(p.getUniqueId())) {found=true;p.sendMessage(title("&6"+i.id()+" &8• &f"+c.name()+" &7["+c.tag()+"] &8• &e/clan aceitar "+i.id()));} if(!found)p.sendMessage(title("&7Você não possui convites pendentes.")); }
+    private void invites(Player p) { new ClanGui(plugin).openInvites(p); }
     private Clan inviteClan(Player p,int id){plugin.clans().cleanupExpiredInvites();for(Clan c:plugin.clans().all()){Clan.Invite i=c.invites().get(id);if(i!=null&&i.player().equals(p.getUniqueId()))return c;}return null;}
     private void accept(Player p,String[] a){if(clan(p)!=null){send(p,"already-clan");return;}if(a.length<2){p.sendMessage(title("&eUso: /clan aceitar <id>"));return;}try{Clan c=inviteClan(p,Integer.parseInt(a[1]));if(c==null){send(p,"invite-expired");return;}int id=Integer.parseInt(a[1]);c.invites().remove(id);c.members().put(p.getUniqueId(),ClanRole.MEMBER);plugin.clans().save();send(p,"invite-accepted","%name%",c.name());}catch(NumberFormatException e){p.sendMessage(title("&cID de convite inválido."));}}
     private void decline(Player p,String[] a){if(a.length<2){p.sendMessage(title("&eUso: /clan recusar <id>"));return;}try{Clan c=inviteClan(p,Integer.parseInt(a[1]));if(c==null){send(p,"invite-expired");return;}c.invites().remove(Integer.parseInt(a[1]));plugin.clans().save();send(p,"invite-denied");}catch(NumberFormatException e){p.sendMessage(title("&cID de convite inválido."));}}
     private void chat(Player p,Clan c,String[] a){if(c==null){send(p,"no-clan");return;}if(a.length<2){p.sendMessage(title("&eUso: /clan chat <mensagem>"));return;}String message=String.join(" ",Arrays.copyOfRange(a,1,a.length));String formatted=plugin.raw("chat-format","%tag%",c.tag(),"%player%",p.getName(),"%message%",message);for(UUID u:c.members().keySet()){Player m=Bukkit.getPlayer(u);if(m!=null)m.sendMessage(formatted);} }
     private void setHome(Player p,Clan c){if(!manager(p,c)){send(p,"only-leader-mod");return;}c.setHome(p.getLocation().clone());plugin.clans().save();send(p,"sethome");}
     private void home(Player p,Clan c){if(c==null){send(p,"no-clan");return;}if(c.home()==null){send(p,"home-missing");return;}int seconds=plugin.getConfig().getInt("teleport.warmup-seconds",3);send(p,"teleporting","%seconds%",String.valueOf(seconds));Bukkit.getScheduler().runTaskLater(plugin,()->{if(p.isOnline()){p.teleport(c.home());send(p,"teleported");}},seconds*20L);}
-    private void setTag(Player p,Clan c,String[] a){if(!leader(p,c)){send(p,c==null?"no-clan":"only-leader");return;}if(a.length<2){p.sendMessage(title("&eUso: /clan tag <tag>"));return;}String tag=a[1];int min=plugin.getConfig().getInt("clan.tag-min-length",2),max=plugin.getConfig().getInt("clan.tag-max-length",6);if(!tag.matches("[A-Za-z0-9_\\-]+")||tag.length()<min||tag.length()>max){p.sendMessage(title("&cTag inválida."));return;}if(!tag.equalsIgnoreCase(c.tag())&&plugin.clans().tagTaken(tag)){p.sendMessage(title("&cEssa tag já está sendo usada."));return;}c.setTag(tag);plugin.clans().save();send(p,"tag-updated","%tag%",tag);}
-    private void info(Player p,Clan c){if(c==null){send(p,"not-found");return;}p.sendMessage(title("&6&lᴄʟᴀɴ &8• &f"+c.name()));p.sendMessage(title("&7Tag: &6"+c.tag()));p.sendMessage(title("&7Líder: &f"+Bukkit.getOfflinePlayer(c.owner()).getName()));p.sendMessage(title("&7Membros: &f"+c.members().size()+"&7/&f"+plugin.getConfig().getInt("clan.max-members",30)));p.sendMessage(title("&7Online: &f"+c.onlineCount()));p.sendMessage(title("&7Home: &f"+(c.home()!=null?"definida":"não definida")));}
+    private void setTag(Player p,Clan c,String[] a){if(!leader(p,c)){send(p,c==null?"no-clan":"only-leader");return;}if(a.length<2){p.sendMessage(title("&eUso: /clan tag <tag>"));return;}String tag=a[1];if(!tag.matches("[A-Z]{3}")){p.sendMessage(plugin.msg("invalid-tag"));return;}if(!tag.equals(c.tag())&&plugin.clans().tagTaken(tag)){p.sendMessage(title("&cEssa tag já está sendo usada."));return;}c.setTag(tag);plugin.clans().save();send(p,"tag-updated","%tag%",tag);}
+    private void info(Player p,Clan c){if(c==null){send(p,"not-found");return;}p.sendMessage(title("&8&lᴄʟᴀɴ &8• &f"+c.name()));p.sendMessage(title("&7Tag: &6"+c.tag()));p.sendMessage(title("&7Líder: &f"+Bukkit.getOfflinePlayer(c.owner()).getName()));p.sendMessage(title("&7Membros: &f"+c.members().size()+"&7/&f"+plugin.getConfig().getInt("clan.max-members",30)));p.sendMessage(title("&7Online: &f"+c.onlineCount()));p.sendMessage(title("&7KDR médio: &e"+String.format(Locale.US,"%.2f",plugin.clans().clanKdr(c))));p.sendMessage(title("&7Home: &f"+(c.home()!=null?"definida":"não definida")));}
 
     public void openMenu(Player p,Clan c){Inventory inv=Bukkit.createInventory(null,27, title(plugin.raw("menu-title","%name%",c.name())));inv.setItem(10,item(Material.BOOK,"&6Informações","&7Clique para ver os dados da clan."));inv.setItem(12,item(Material.PLAYER_HEAD,"&eMembros","&7Membros: &f"+c.members().size()));inv.setItem(14,item(Material.ENDER_CHEST,"&bBaú da clan","&7Baú comunitário."));inv.setItem(16,item(Material.COMPASS,"&aHome","&7Teleportar para a home."));inv.setItem(22,item(Material.NAME_TAG,"&eTag","&7Use /clan tag <tag>."));if(manager(p,c))inv.setItem(24,item(Material.COMPARATOR,"&cConfiguração","&7Abrir configurações."));p.openInventory(inv);}
     public void openConfig(Player p,Clan c){if(!manager(p,c)){send(p,"only-leader-mod");return;}Inventory inv=Bukkit.createInventory(null,27,title(plugin.raw("config-title")));inv.setItem(11,item(c.friendlyFire()?Material.GREEN_WOOL:Material.RED_WOOL,"&ePvP entre membros: "+(c.friendlyFire()?"&aON":"&cOFF"),"&7Clique para alternar."));inv.setItem(15,item(Material.ARROW,"&cVoltar","&7Voltar ao menu."));p.openInventory(inv);}
