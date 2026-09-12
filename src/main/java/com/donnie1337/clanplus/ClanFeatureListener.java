@@ -47,11 +47,12 @@ public final class ClanFeatureListener implements Listener {
         meta.setOwningPlayer(p);
         meta.setDisplayName(color("&b" + p.getName()));
         List<String> lore = new ArrayList<>();
-        lore.add(color("&8👤 &7Seu perfil no sistema de clans"));
+        lore.add(color("&b👤 &7Nome: &f" + p.getName()));
+        lore.add(color("&e🎖 &7Cargo: &f" + (clan == null ? "Nenhum" : roleName(clan.role(p.getUniqueId())))));
+        lore.add(color("&3🏠 &7Clan: &f" + (clan == null ? "Nenhum" : clan.name())));
         lore.add("");
-        lore.add(color("&b🏠 &7Clan: &f" + (clan == null ? "Nenhum" : clan.name())));
-        lore.add(color("&e⭐ &7Cargo: &f" + (clan == null ? "Nenhum" : roleName(clan.role(p.getUniqueId())))));
         lore.add(color("&6⚔ &7KDR: &e" + kdr(playerKdr(p))));
+        lore.add(color("&d🪙 &7Coins: &f0"));
         lore.add("");
         lore.add(color("&8Este item é apenas informativo."));
         meta.setLore(lore);
