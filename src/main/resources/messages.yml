@@ -44,3 +44,8 @@ create-name-set: "&fNome definido!\n&8• &7Clan: &f%name%\n&8• &7Agora digite
 create-invalid-name: "&cNome inválido!\n&8• &7Use entre &f%min% &7e &f%max% &7caracteres.\n&8• &7Permitidos: letras, números, &f_ &7ou &f-."
 create-name-taken: "&cEsse nome já está sendo usado.\n&8• &7Escolha outro nome para sua clan."
 create-cancelled: '&7Criação da clan cancelada.'
+notification-invites: '&eVocê possui &f%count% &enotificação(ões) de convite pendente(s).'
+notification-clan: '&3Seu clan &f%name% &3está no nível &e%level% &3e ocupa a posição &6#%rank% &3do ranking.'
+upgrade-bought: '&aUpgrade comprado! &7Nível: &f%level% &7• Custo: &e%cost% XP&7.'
+upgrade-no-xp: '&cXP insuficiente. &7Você precisa de &e%cost% XP&7.'
+notification-upgrade: '&dSeu clan &f%name% &drecebeu um novo upgrade: &f%upgrade%&d.'
