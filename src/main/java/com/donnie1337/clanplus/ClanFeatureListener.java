@@ -12,6 +12,7 @@ import org.bukkit.event.inventory.InventoryDragEvent;
 import org.bukkit.event.player.PlayerCommandPreprocessEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.inventory.Inventory;
+import org.bukkit.inventory.ItemFlag;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.inventory.meta.SkullMeta;
@@ -37,8 +38,18 @@ public final class ClanFeatureListener implements Listener {
         ItemMeta meta = item.getItemMeta();
         meta.setDisplayName(color(name).replace("§l", ""));
         if (lore.length > 0) meta.setLore(java.util.Arrays.stream(lore).map(this::color).toList());
+        meta.addItemFlags(ItemFlag.HIDE_ATTRIBUTES);
         item.setItemMeta(meta);
         return item;
+    }
+
+    private ItemStack filler() {
+        return item(Material.GRAY_STAINED_GLASS_PANE, "&8 ");
+    }
+
+    private void fill(Inventory inv, int... slots) {
+        ItemStack pane = filler();
+        for (int slot : slots) inv.setItem(slot, pane.clone());
     }
 
     private ItemStack profileHead(Player p, Clan clan) {
@@ -116,32 +127,36 @@ public final class ClanFeatureListener implements Listener {
         String role = clan == null ? "Nenhum" : roleName(clan.role(p.getUniqueId()));
         int pending = pendingInvites(p.getUniqueId());
 
-        // Segunda linha: 10 11 12 13 14 15 16 17 18.
-        // A cabeça fica no segundo slot da segunda linha: slot 11.
+        fill(inv, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 13, 15, 18, 19, 20, 21, 22, 23, 24, 25, 26);
+
         inv.setItem(11, profileHead(p, clan));
         inv.setItem(12, item(clan == null ? Material.PAPER : Material.CHEST,
                 clan == null ? "&aCriar Clan" : "&bMeu Clan",
-                clan == null ? "&8📜 &7Crie sua própria clan e comece sua história." : "&8🏠 &7Gerencie sua clan e seus membros.",
-                clan == null ? "&3✦ &7Escolha um nome e uma TAG exclusiva." : "&3✦ &7Clan: &f" + clan.name(),
-                clan == null ? "&3✦ &7Convide jogadores e conquiste posições." : "&3✦ &7Seu cargo: &f" + role,
+                clan == null ? "&8📜 &7Comece sua jornada criando sua própria clan." : "&8🏠 &7Acesse o centro de controle da sua clan.",
+                "",
+                clan == null ? "&3✦ &7Nome e TAG exclusivos" : "&3✦ &7Clan: &f" + clan.name(),
+                clan == null ? "&3✦ &7Convide jogadores e conquiste posições" : "&3✦ &7Seu cargo: &f" + role,
                 "",
                 clan == null ? "&a➜ Clique para começar" : "&b➜ Clique para abrir"));
         inv.setItem(14, item(Material.WRITABLE_BOOK, "&eConvites",
-                "&8✉ &7Convites enviados para você por outras clans.",
-                "&e✦ &7Convites pendentes: &f" + pending,
-                "&7Aceite ou recuse os convites recebidos.",
+                "&8✉ &7Convites recebidos de outras clans.",
                 "",
-                "&e➜ Clique para visualizar"));
+                "&e✦ &7Pendentes: &f" + pending,
+                "&7Aceite ou recuse convites quando quiser.",
+                "",
+                pending > 0 ? "&a➜ Você tem convites para ver" : "&8➜ Nenhum convite pendente"));
         inv.setItem(16, item(Material.NETHER_STAR, "&6Ranking",
-                "&8🏆 &7Veja as clans que mais se destacam.",
+                "&8🏆 &7Veja quem está no topo do servidor.",
+                "",
                 "&6✦ &7Critérios: &fnível, KDR e XP",
-                "&7Compare a evolução das clans do servidor.",
+                "&7Acompanhe a evolução das clans.",
                 "",
                 "&6➜ Clique para abrir o ranking"));
         inv.setItem(17, item(Material.NAME_TAG, "&fClans do servidor",
-                "&8🌎 &7Explore todas as clans existentes.",
-                "&f✦ &7Consulte nome, TAG, líder e membros.",
-                "&7Veja também jogadores online e KDR médio.",
+                "&8🌎 &7Conheça as clans que fazem parte do servidor.",
+                "",
+                "&f✦ &7Nome, TAG, líder e membros",
+                "&7Consulte também atividade e KDR médio.",
                 "",
                 "&f➜ Clique para explorar"));
         p.openInventory(inv);
@@ -153,7 +168,9 @@ public final class ClanFeatureListener implements Listener {
         Inventory inv = p.getOpenInventory().getTopInventory();
         inv.setItem(20, item(Material.ANVIL, "&eUpgrades do Clan",
                 "&8⚙ &7Evolua os benefícios da sua clan.",
+                "",
                 "&e✦ &7XP disponível: &f" + clan.xp(),
+                "&7Aprimore limites e bônus conforme sua progressão.",
                 "",
                 "&e➜ Clique para abrir"));
     }
@@ -161,10 +178,16 @@ public final class ClanFeatureListener implements Listener {
     private void openProfile(Player p) {
         Clan clan = plugin.clans().byPlayer(p.getUniqueId());
         Inventory inv = Bukkit.createInventory(null, 27, "§8ᴄʟᴀɴ • ᴘᴇʀғɪʟ");
+        fill(inv, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 12, 14, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26);
         inv.setItem(13, profileHead(p, clan));
         if (clan != null) {
-            inv.setItem(11, item(Material.NAME_TAG, "&eClan", "&8🏠 &7Nome: &f" + clan.name(), "&3✦ &7TAG: &f" + clan.tag(), "&3✦ &7Cargo: &f" + roleName(clan.role(p.getUniqueId()))));
-            inv.setItem(15, item(Material.IRON_SWORD, "&cDesempenho", "&8⚔ &7KDR da clan: &e" + kdr(plugin.clans().clanKdr(clan)), "&3✦ &7Membros: &f" + clan.members().size()));
+            inv.setItem(11, item(Material.NAME_TAG, "&eClan",
+                    "&8🏠 &7Nome: &f" + clan.name(),
+                    "&3🏷 &7TAG: &f" + clan.tag(),
+                    "&3✦ &7Cargo: &f" + roleName(clan.role(p.getUniqueId()))));
+            inv.setItem(15, item(Material.IRON_SWORD, "&cDesempenho",
+                    "&8⚔ &7KDR da clan: &e" + kdr(plugin.clans().clanKdr(clan)),
+                    "&3👥 &7Membros: &f" + clan.members().size()));
         }
         p.openInventory(inv);
     }
@@ -177,33 +200,45 @@ public final class ClanFeatureListener implements Listener {
             Material material = i == 0 ? Material.GOLD_BLOCK : i == 1 ? Material.IRON_BLOCK : i == 2 ? Material.COPPER_BLOCK : Material.NAME_TAG;
             inv.setItem(i, item(material, "&f#" + (i + 1) + " &b" + clan.name(),
                     "&8🏆 &7Posição: &f#" + (i + 1),
-                    "&3🏷 &7TAG: &f" + clan.tag(), "&e⭐ &7Nível: &f" + clan.level(), "&8✦ &7XP: &f" + clan.xp(),
-                    "&6⚔ &7KDR médio: &e" + kdr(plugin.clans().clanKdr(clan)), "&b👥 &7Membros: &f" + clan.members().size(),
+                    "",
+                    "&3🏷 &7TAG: &f" + clan.tag(),
+                    "&e⭐ &7Nível: &f" + clan.level(),
+                    "&8✦ &7XP: &f" + clan.xp(),
+                    "&6⚔ &7KDR médio: &e" + kdr(plugin.clans().clanKdr(clan)),
+                    "&b👥 &7Membros: &f" + clan.members().size(),
                     "&a● &7Online: &f" + clan.onlineCount()));
         }
+        fill(inv, 45, 46, 47, 48, 49, 50, 51, 52, 53);
         p.openInventory(inv);
     }
 
     public void openUpgrades(Player p) {
         Inventory inv = Bukkit.createInventory(null, 27, UPGRADES);
         Clan clan = plugin.clans().byPlayer(p.getUniqueId());
+        fill(inv, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 12, 14, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26);
         if (clan == null) {
-            inv.setItem(13, item(Material.BARRIER, "&cNenhum Clan", "&8⚠ &7Você precisa estar em um clan."));
+            inv.setItem(13, item(Material.BARRIER, "&cNenhum Clan",
+                    "&8⚠ &7Você precisa estar em um clan.",
+                    "",
+                    "&8➜ &7Entre ou crie uma clan para acessar as melhorias."));
         } else {
             boolean manager = clan.role(p.getUniqueId()) != null && clan.role(p.getUniqueId()).canManage();
             inv.setItem(11, item(Material.CHEST, "&bLimite de membros",
                     "&8👥 &7Nível do upgrade: &f" + clan.upgrade("member_limit"),
                     "&b✦ &7Capacidade: &f" + clan.memberLimit(plugin.getConfig().getInt("clan.max-members", 30)),
                     "&e💰 &7Próximo custo: &e" + plugin.clans().upgradeCost(clan, "member_limit") + " XP",
-                    "", manager ? "&a➜ Clique para comprar" : "&c✘ Somente líderes e moderadores"));
+                    "",
+                    manager ? "&a➜ Clique para comprar" : "&c✘ Somente líderes e moderadores"));
             inv.setItem(13, item(Material.EXPERIENCE_BOTTLE, "&eXP do Clan",
-                    "&8✨ &7XP disponível: &f" + clan.xp(), "&e⭐ &7Nível atual: &f" + clan.level(),
+                    "&8✨ &7XP disponível: &f" + clan.xp(),
+                    "&e⭐ &7Nível atual: &f" + clan.level(),
                     "&3✦ &7XP para o próximo nível: &f" + (clan.xp() + clan.xpForNextLevel() - clan.xpIntoLevel())));
             inv.setItem(15, item(Material.EXPERIENCE_BOTTLE, "&dBônus de XP",
                     "&8✨ &7Nível do upgrade: &f" + clan.upgrade("xp_boost"),
                     "&d✦ &7Bônus atual: &e+" + (int)((clan.xpMultiplier() - 1.0D) * 100) + "%",
                     "&e💰 &7Próximo custo: &e" + plugin.clans().upgradeCost(clan, "xp_boost") + " XP",
-                    "", manager ? "&a➜ Clique para comprar" : "&c✘ Somente líderes e moderadores"));
+                    "",
+                    manager ? "&a➜ Clique para comprar" : "&c✘ Somente líderes e moderadores"));
         }
         p.openInventory(inv);
     }
