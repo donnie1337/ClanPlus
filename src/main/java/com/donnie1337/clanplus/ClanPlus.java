@@ -2,9 +2,11 @@ package com.donnie1337.clanplus;
 
 import org.bukkit.ChatColor;
 import org.bukkit.command.PluginCommand;
+import org.bukkit.entity.Player;
 import org.bukkit.plugin.java.JavaPlugin;
 
 import java.util.Map;
+import java.util.UUID;
 
 public final class ClanPlus extends JavaPlugin {
     private ClanManager clanManager;
@@ -48,6 +50,17 @@ public final class ClanPlus extends JavaPlugin {
         String value = messages.getOrDefault(key, key);
         for (int i = 0; i + 1 < replacements.length; i += 2) value = value.replace(replacements[i], replacements[i + 1]);
         return ChatColor.translateAlternateColorCodes('&', value);
+    }
+
+    /** Integração pública para outros plugins obterem a tag do jogador. */
+    public String getPlayerTag(UUID playerId) {
+        if (playerId == null || clanManager == null) return "";
+        Clan clan = clanManager.byPlayer(playerId);
+        return clan == null ? "" : clan.tag();
+    }
+
+    public String getPlayerTag(Player player) {
+        return player == null ? "" : getPlayerTag(player.getUniqueId());
     }
 
     public ClanManager clans() { return clanManager; }
