@@ -192,7 +192,7 @@ public final class ClanListener implements Listener {
         String message = e.getMessage().trim();
         Player p = e.getPlayer();
         if (message.equalsIgnoreCase("/trigger clanplus_cancel")) {
-            if (createSteps.containsKey(p.getUniqueId()) && LoginPlusHook.isAuthenticated(p)) {
+            if (createSteps.get(p.getUniqueId()) == CreateStep.NAME && LoginPlusHook.isAuthenticated(p)) {
                 e.setCancelled(true);
                 cancelCreation(p);
             }
@@ -209,7 +209,7 @@ public final class ClanListener implements Listener {
             return;
         }
         if (!message.equalsIgnoreCase("/clan cancelar")) return;
-        if (!createSteps.containsKey(p.getUniqueId())) return;
+        if (createSteps.get(p.getUniqueId()) != CreateStep.NAME) return;
         e.setCancelled(true); cancelCreation(p);
     }
 
