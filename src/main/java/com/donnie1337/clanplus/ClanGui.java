@@ -25,7 +25,6 @@ public final class ClanGui {
     public static final String MEMBERS = "§8Membros da clan";
     public static final String DELETE = "§8Excluir clan";
     private final ClanPlus plugin;
-
     public ClanGui(ClanPlus plugin) { this.plugin = plugin; }
     private String color(String s) { return ChatColor.translateAlternateColorCodes('&', s); }
     private ItemStack item(Material material, String name, String... lore) { ItemStack stack = new ItemStack(material); ItemMeta meta = stack.getItemMeta(); meta.setDisplayName(color(name)); if (lore.length > 0) meta.setLore(java.util.Arrays.stream(lore).map(this::color).toList()); stack.setItemMeta(meta); return stack; }
@@ -38,12 +37,21 @@ public final class ClanGui {
     public void openMain(Player p) {
         Inventory inv = Bukkit.createInventory(null, 27, MAIN);
         Clan c = plugin.clans().byPlayer(p.getUniqueId());
-        int kills = plugin.clans().kills(p.getUniqueId()), deaths = plugin.clans().deaths(p.getUniqueId());
-        String clanName = c == null ? "Nenhum" : c.name() + " [" + c.tag() + "]";
+        double kdr = plugin.clans().kdr(p.getUniqueId());
+        String clanName = c == null ? "Nenhum" : c.name();
+        String tag = c == null ? "Nenhuma" : c.tag();
         String role = c == null ? "Nenhum" : roleName(c.role(p.getUniqueId()));
         ItemStack profile = new ItemStack(Material.PLAYER_HEAD);
-        SkullMeta skull = (SkullMeta) profile.getItemMeta(); skull.setOwningPlayer(p); skull.setDisplayName(color("&b&l" + p.getName()));
-        skull.setLore(List.of(color("&7Clan: &f" + clanName), color("&7Cargo: &f" + role), color("&7Coins: &6" + coins(p)), "", color("&7KDR: &e" + String.format(Locale.US, "%.2f", plugin.clans().kdr(p.getUniqueId()))), color("&7Kills: &a" + kills), color("&7Mortes: &c" + deaths)));
+        SkullMeta skull = (SkullMeta) profile.getItemMeta();
+        skull.setOwningPlayer(p);
+        skull.setDisplayName(color("&b&l" + p.getName()));
+        skull.setLore(List.of(
+                color("&7Clan: &f" + clanName),
+                color("&7Tag: &f" + tag),
+                color("&7Cargo: &f" + role),
+                color("&7KDR: &e" + String.format(Locale.US, "%.2f", kdr)),
+                color("&7Coins: &6" + coins(p))
+        ));
         profile.setItemMeta(skull);
         inv.setItem(4, profile);
         inv.setItem(11, item(c == null ? Material.EMERALD : Material.CHEST, c == null ? "&aCriar Clan" : "&bMeu Clan", c == null ? "&7Crie seu próprio clan." : "&7Gerencie seu clan."));
@@ -74,32 +82,14 @@ public final class ClanGui {
         inv.setItem(49, item(Material.ARROW, "&7Voltar")); p.openInventory(inv);
     }
     public void openMembers(Player p, Clan c) {
-        Inventory inv = Bukkit.createInventory(null, 54, MEMBERS);
-        int slot = 0;
-        for (UUID uuid : c.members().keySet()) {
-            if (slot >= 45) break;
-            OfflinePlayer target = Bukkit.getOfflinePlayer(uuid);
-            String role = roleName(c.role(uuid));
-            List<String> lore = new ArrayList<>();
-            lore.add("&7Cargo: &f" + role);
-            lore.add("&7KDR: &e" + String.format(Locale.US, "%.2f", plugin.clans().kdr(uuid)));
-            if (uuid.equals(c.owner())) lore.add("&8Líder não pode ser expulso");
-            else if (c.role(p.getUniqueId()) != null && c.role(p.getUniqueId()).canManage()) lore.add("&cClique para expulsar");
-            inv.setItem(slot++, playerHead(target, "&f" + name(uuid), lore.toArray(new String[0])));
-        }
-        inv.setItem(49, item(Material.ARROW, "&7Voltar"));
-        if (slot == 0) inv.setItem(22, item(Material.BARRIER, "&cNenhum membro"));
-        p.openInventory(inv);
+        Inventory inv = Bukkit.createInventory(null, 54, MEMBERS); int slot = 0;
+        for (UUID uuid : c.members().keySet()) { if (slot >= 45) break; OfflinePlayer target = Bukkit.getOfflinePlayer(uuid); String role = roleName(c.role(uuid)); List<String> lore = new ArrayList<>(); lore.add("&7Cargo: &f" + role); lore.add("&7KDR: &e" + String.format(Locale.US, "%.2f", plugin.clans().kdr(uuid))); if (uuid.equals(c.owner())) lore.add("&8Líder não pode ser expulso"); else if (c.role(p.getUniqueId()) != null && c.role(p.getUniqueId()).canManage()) lore.add("&cClique para expulsar"); inv.setItem(slot++, playerHead(target, "&f" + name(uuid), lore.toArray(new String[0]))); }
+        inv.setItem(49, item(Material.ARROW, "&7Voltar")); if (slot == 0) inv.setItem(22, item(Material.BARRIER, "&cNenhum membro")); p.openInventory(inv);
     }
     public void openDelete(Player p, Clan c) {
-        Inventory inv = Bukkit.createInventory(null, 27, DELETE);
-        inv.setItem(11, item(Material.GREEN_WOOL, "&aConfirmar exclusão", c.members().size() == 1 ? "&7O clan será excluído permanentemente." : "&cExpulse todos os outros membros primeiro.", "&cEsta ação não pode ser desfeita."));
-        inv.setItem(15, item(Material.RED_WOOL, "&cCancelar", "&7Voltar ao menu da clan."));
-        p.openInventory(inv);
+        Inventory inv = Bukkit.createInventory(null, 27, DELETE); inv.setItem(11, item(Material.GREEN_WOOL, "&aConfirmar exclusão", c.members().size() == 1 ? "&7O clan será excluído permanentemente." : "&cExpulse todos os outros membros primeiro.", "&cEsta ação não pode ser desfeita.")); inv.setItem(15, item(Material.RED_WOOL, "&cCancelar", "&7Voltar ao menu da clan.")); p.openInventory(inv);
     }
-    private ItemStack playerHead(OfflinePlayer player, String name, String... lore) {
-        ItemStack stack = new ItemStack(Material.PLAYER_HEAD); SkullMeta meta = (SkullMeta) stack.getItemMeta(); meta.setOwningPlayer(player); meta.setDisplayName(color(name)); meta.setLore(java.util.Arrays.stream(lore).map(this::color).toList()); stack.setItemMeta(meta); return stack;
-    }
+    private ItemStack playerHead(OfflinePlayer player, String name, String... lore) { ItemStack stack = new ItemStack(Material.PLAYER_HEAD); SkullMeta meta = (SkullMeta) stack.getItemMeta(); meta.setOwningPlayer(player); meta.setDisplayName(color(name)); meta.setLore(java.util.Arrays.stream(lore).map(this::color).toList()); stack.setItemMeta(meta); return stack; }
     private String name(UUID uuid) { String name = Bukkit.getOfflinePlayer(uuid).getName(); return name == null ? uuid.toString().substring(0, 8) : name; }
     private String roleName(ClanRole role) { if (role == null) return "Nenhum"; return switch (role) { case LEADER -> "Líder"; case MODERATOR -> "Moderador"; case MEMBER -> "Membro"; }; }
 }
