@@ -43,15 +43,6 @@ public final class ClanFeatureListener implements Listener {
         return item;
     }
 
-    private ItemStack filler() {
-        return item(Material.GRAY_STAINED_GLASS_PANE, "&8 ");
-    }
-
-    private void fill(Inventory inv, int... slots) {
-        ItemStack pane = filler();
-        for (int slot : slots) inv.setItem(slot, pane.clone());
-    }
-
     private ItemStack profileHead(Player p, Clan clan) {
         ItemStack item = new ItemStack(Material.PLAYER_HEAD);
         SkullMeta meta = (SkullMeta) item.getItemMeta();
@@ -72,9 +63,7 @@ public final class ClanFeatureListener implements Listener {
     }
 
     private double playerKdr(Player p) {
-        Clan clan = plugin.clans().byPlayer(p.getUniqueId());
-        if (clan == null) return 0.0D;
-        return plugin.clans().clanKdr(clan);
+        return plugin.clans().kdr(p.getUniqueId());
     }
 
     private boolean authenticated(Player p) { return LoginPlusHook.requireAuthentication(plugin, p); }
@@ -127,8 +116,6 @@ public final class ClanFeatureListener implements Listener {
         String role = clan == null ? "Nenhum" : roleName(clan.role(p.getUniqueId()));
         int pending = pendingInvites(p.getUniqueId());
 
-        fill(inv, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 13, 15, 18, 19, 20, 21, 22, 23, 24, 25, 26);
-
         inv.setItem(11, profileHead(p, clan));
         inv.setItem(12, item(clan == null ? Material.PAPER : Material.CHEST,
                 clan == null ? "&aCriar Clan" : "&bMeu Clan",
@@ -178,7 +165,6 @@ public final class ClanFeatureListener implements Listener {
     private void openProfile(Player p) {
         Clan clan = plugin.clans().byPlayer(p.getUniqueId());
         Inventory inv = Bukkit.createInventory(null, 27, "§8ᴄʟᴀɴ • ᴘᴇʀғɪʟ");
-        fill(inv, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 12, 14, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26);
         inv.setItem(13, profileHead(p, clan));
         if (clan != null) {
             inv.setItem(11, item(Material.NAME_TAG, "&eClan",
@@ -186,7 +172,7 @@ public final class ClanFeatureListener implements Listener {
                     "&3🏷 &7TAG: &f" + clan.tag(),
                     "&3✦ &7Cargo: &f" + roleName(clan.role(p.getUniqueId()))));
             inv.setItem(15, item(Material.IRON_SWORD, "&cDesempenho",
-                    "&8⚔ &7KDR da clan: &e" + kdr(plugin.clans().clanKdr(clan)),
+                    "&8⚔ &7KDR do jogador: &e" + kdr(playerKdr(p)),
                     "&3👥 &7Membros: &f" + clan.members().size()));
         }
         p.openInventory(inv);
@@ -208,14 +194,12 @@ public final class ClanFeatureListener implements Listener {
                     "&b👥 &7Membros: &f" + clan.members().size(),
                     "&a● &7Online: &f" + clan.onlineCount()));
         }
-        fill(inv, 45, 46, 47, 48, 49, 50, 51, 52, 53);
         p.openInventory(inv);
     }
 
     public void openUpgrades(Player p) {
         Inventory inv = Bukkit.createInventory(null, 27, UPGRADES);
         Clan clan = plugin.clans().byPlayer(p.getUniqueId());
-        fill(inv, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 12, 14, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26);
         if (clan == null) {
             inv.setItem(13, item(Material.BARRIER, "&cNenhum Clan",
                     "&8⚠ &7Você precisa estar em um clan.",
@@ -243,7 +227,7 @@ public final class ClanFeatureListener implements Listener {
         p.openInventory(inv);
     }
 
-    @EventHandler(priority = EventPriority.HIGHEST)
+    @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
     public void onClick(InventoryClickEvent event) {
         if (!(event.getWhoClicked() instanceof Player p)) return;
         String title = clean(event.getView().getTitle());
@@ -252,7 +236,7 @@ public final class ClanFeatureListener implements Listener {
         if (!authenticated(p)) { p.closeInventory(); return; }
         if (title.equals(clean(DASHBOARD))) {
             switch (event.getRawSlot()) {
-                case 11 -> { }
+                case 11 -> openProfile(p);
                 case 12 -> {
                     Clan clan = plugin.clans().byPlayer(p.getUniqueId());
                     p.closeInventory();
@@ -294,7 +278,7 @@ public final class ClanFeatureListener implements Listener {
         }
     }
 
-    @EventHandler
+    @EventHandler(ignoreCancelled = true)
     public void onDrag(InventoryDragEvent event) {
         if (isFeatureGui(clean(event.getView().getTitle()))) event.setCancelled(true);
     }
