@@ -28,6 +28,7 @@ public final class ClanPlus extends JavaPlugin {
         PluginCommand admin = getCommand("clanadmin");
         if (admin != null) { ClanAdminCommand adminCommand = new ClanAdminCommand(this); admin.setExecutor(adminCommand); admin.setTabCompleter(adminCommand); }
         getServer().getPluginManager().registerEvents(new ClanListener(this), this);
+        getServer().getPluginManager().registerEvents(new ClanFeatureListener(this), this);
         getLogger().info("ClanPlus habilitado com " + clanManager.all().size() + " clan(s).");
     }
 
@@ -52,7 +53,6 @@ public final class ClanPlus extends JavaPlugin {
         return ChatColor.translateAlternateColorCodes('&', value);
     }
 
-    /** Integração pública para outros plugins obterem a tag do jogador. */
     public String getPlayerTag(UUID playerId) {
         if (playerId == null || clanManager == null) return "";
         Clan clan = clanManager.byPlayer(playerId);
