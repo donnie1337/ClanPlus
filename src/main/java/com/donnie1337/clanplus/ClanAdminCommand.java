@@ -6,6 +6,7 @@ import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
 import org.bukkit.command.TabCompleter;
+import org.bukkit.entity.Player;
 
 import java.util.Arrays;
 import java.util.List;
@@ -15,6 +16,7 @@ public final class ClanAdminCommand implements CommandExecutor, TabCompleter {
     private final ClanPlus plugin;
     public ClanAdminCommand(ClanPlus plugin) { this.plugin = plugin; }
     @Override public boolean onCommand(CommandSender s, Command c, String label, String[] a) {
+        if (s instanceof Player p && !LoginPlusHook.requireAuthentication(plugin, p)) return true;
         if (!s.hasPermission("clanplus.admin")) { s.sendMessage(ChatColor.RED + "Você não tem permissão para executar este comando."); return true; }
         if (a.length == 0) {
             s.sendMessage(ChatColor.translateAlternateColorCodes('&', "&6&lᴄʟᴀɴ &8• &fPainel administrativo"));
