@@ -115,6 +115,7 @@ public final class ClanFeatureListener implements Listener {
         String role = clan == null ? "Nenhum" : roleName(clan.role(p.getUniqueId()));
         int pending = pendingInvites(p.getUniqueId());
 
+        // Linha principal: perfil, criar/meu clan, convites, ranking e clans do servidor.
         inv.setItem(11, profileHead(p, clan));
         inv.setItem(12, item(clan == null ? Material.PAPER : Material.CHEST,
                 clan == null ? "&aCriar Clan" : "&bMeu Clan",
@@ -123,11 +124,11 @@ public final class ClanFeatureListener implements Listener {
                 clan == null ? "" : "&7Seu cargo: &f" + role,
                 "",
                 clan == null ? "&aClique para começar" : "&bClique para abrir"));
-        inv.setItem(15, item(Material.WRITABLE_BOOK, "&eConvites recebidos",
+        inv.setItem(13, item(Material.WRITABLE_BOOK, "&eConvites recebidos",
                 "&7Convites enviados para você.", "&7Pendentes: &f" + pending, "", "&eClique para visualizar"));
-        inv.setItem(17, item(Material.NETHER_STAR, "&6Ranking",
+        inv.setItem(14, item(Material.NETHER_STAR, "&6Ranking",
                 "&7Veja a classificação das clans.", "&7Critérios: nível, KDR e XP.", "", "&6Clique para abrir"));
-        inv.setItem(18, item(Material.NAME_TAG, "&fClans do servidor",
+        inv.setItem(15, item(Material.NAME_TAG, "&fClans do servidor",
                 "&7Veja todas as clans existentes.", "&7Nome, TAG, membros e KDR.", "", "&fClique para explorar"));
         p.openInventory(inv);
     }
@@ -136,7 +137,11 @@ public final class ClanFeatureListener implements Listener {
         if (p.getOpenInventory() == null) return;
         if (!clean(p.getOpenInventory().getTitle()).startsWith("Clan de ")) return;
         Inventory inv = p.getOpenInventory().getTopInventory();
-        inv.setItem(20, item(Material.ANVIL, "&eUpgrades do Clan", "&7Evolua os benefícios da sua clan.", "&7XP disponível: &f" + clan.xp(), "", "&eClique para abrir"));
+        inv.setItem(20, item(Material.ANVIL, "&eUpgrades do Clan",
+                "&7Evolua os benefícios da sua clan.",
+                "&7XP disponível: &f" + clan.xp(),
+                "",
+                "&eClique para abrir"));
     }
 
     private void openProfile(Player p) {
@@ -146,6 +151,8 @@ public final class ClanFeatureListener implements Listener {
         if (clan != null) {
             inv.setItem(11, item(Material.NAME_TAG, "&eClan", "&7Nome: &f" + clan.name(), "&7TAG: &f" + clan.tag(), "&7Cargo: &f" + roleName(clan.role(p.getUniqueId()))));
             inv.setItem(15, item(Material.IRON_SWORD, "&cDesempenho", "&7KDR da clan: &e" + kdr(plugin.clans().clanKdr(clan)), "&7Membros: &f" + clan.members().size()));
+        } else {
+            inv.setItem(13, item(Material.PLAYER_HEAD, "&f" + p.getName(), "&7Você ainda não pertence a uma clan."));
         }
         p.openInventory(inv);
     }
@@ -156,7 +163,10 @@ public final class ClanFeatureListener implements Listener {
         for (int i = 0; i < Math.min(45, clans.size()); i++) {
             Clan clan = clans.get(i);
             Material material = i == 0 ? Material.GOLD_BLOCK : i == 1 ? Material.IRON_BLOCK : i == 2 ? Material.COPPER_BLOCK : Material.NAME_TAG;
-            inv.setItem(i, item(material, "&f#" + (i + 1) + " &b" + clan.name(), "&7TAG: &f" + clan.tag(), "&7Nível: &e" + clan.level(), "&7XP: &f" + clan.xp(), "&7KDR médio: &e" + kdr(plugin.clans().clanKdr(clan)), "&7Membros: &f" + clan.members().size(), "&7Online: &a" + clan.onlineCount()));
+            inv.setItem(i, item(material, "&f#" + (i + 1) + " &b" + clan.name(),
+                    "&7TAG: &f" + clan.tag(), "&7Nível: &e" + clan.level(), "&7XP: &f" + clan.xp(),
+                    "&7KDR médio: &e" + kdr(plugin.clans().clanKdr(clan)), "&7Membros: &f" + clan.members().size(),
+                    "&7Online: &a" + clan.onlineCount()));
         }
         p.openInventory(inv);
     }
@@ -164,12 +174,23 @@ public final class ClanFeatureListener implements Listener {
     public void openUpgrades(Player p) {
         Inventory inv = Bukkit.createInventory(null, 27, UPGRADES);
         Clan clan = plugin.clans().byPlayer(p.getUniqueId());
-        if (clan == null) inv.setItem(13, item(Material.BARRIER, "&cNenhum Clan", "&7Você precisa estar em um clan."));
-        else {
+        if (clan == null) {
+            inv.setItem(13, item(Material.BARRIER, "&cNenhum Clan", "&7Você precisa estar em um clan."));
+        } else {
             boolean manager = clan.role(p.getUniqueId()) != null && clan.role(p.getUniqueId()).canManage();
-            inv.setItem(11, item(Material.CHEST, "&bLimite de membros", "&7Nível: &f" + clan.upgrade("member_limit"), "&7Capacidade: &f" + clan.memberLimit(plugin.getConfig().getInt("clan.max-members", 30)), "&7Próximo custo: &e" + plugin.clans().upgradeCost(clan, "member_limit") + " XP", "", manager ? "&aClique para comprar" : "&cSomente líderes e moderadores"));
-            inv.setItem(13, item(Material.EXPERIENCE_BOTTLE, "&eXP do Clan", "&7Disponível: &f" + clan.xp(), "&7Nível atual: &e" + clan.level(), "&7Próximo nível: &f" + (clan.xp() + clan.xpForNextLevel() - clan.xpIntoLevel())));
-            inv.setItem(15, item(Material.EXPERIENCE_BOTTLE, "&dBônus de XP", "&7Nível: &f" + clan.upgrade("xp_boost"), "&7Bônus atual: &e+" + (int)((clan.xpMultiplier() - 1.0D) * 100) + "%", "&7Próximo custo: &e" + plugin.clans().upgradeCost(clan, "xp_boost") + " XP", "", manager ? "&aClique para comprar" : "&cSomente líderes e moderadores"));
+            inv.setItem(11, item(Material.CHEST, "&bLimite de membros",
+                    "&7Nível: &f" + clan.upgrade("member_limit"),
+                    "&7Capacidade: &f" + clan.memberLimit(plugin.getConfig().getInt("clan.max-members", 30)),
+                    "&7Próximo custo: &e" + plugin.clans().upgradeCost(clan, "member_limit") + " XP",
+                    "", manager ? "&aClique para comprar" : "&cSomente líderes e moderadores"));
+            inv.setItem(13, item(Material.EXPERIENCE_BOTTLE, "&eXP do Clan",
+                    "&7Disponível: &f" + clan.xp(), "&7Nível atual: &e" + clan.level(),
+                    "&7Próximo nível: &f" + (clan.xp() + clan.xpForNextLevel() - clan.xpIntoLevel())));
+            inv.setItem(15, item(Material.EXPERIENCE_BOTTLE, "&dBônus de XP",
+                    "&7Nível: &f" + clan.upgrade("xp_boost"),
+                    "&7Bônus atual: &e+" + (int)((clan.xpMultiplier() - 1.0D) * 100) + "%",
+                    "&7Próximo custo: &e" + plugin.clans().upgradeCost(clan, "xp_boost") + " XP",
+                    "", manager ? "&aClique para comprar" : "&cSomente líderes e moderadores"));
         }
         p.openInventory(inv);
     }
@@ -188,11 +209,14 @@ public final class ClanFeatureListener implements Listener {
                     Clan clan = plugin.clans().byPlayer(p.getUniqueId());
                     p.closeInventory();
                     if (clan == null) p.performCommand("clan criar");
-                    else { new ClanCommand(plugin).openMenu(p, clan); decorateClanMenu(p, clan); }
+                    else {
+                        new ClanCommand(plugin).openMenu(p, clan);
+                        decorateClanMenu(p, clan);
+                    }
                 }
-                case 15 -> { p.closeInventory(); new ClanGui(plugin).openInvites(p); }
-                case 17 -> openRanking(p);
-                case 18 -> { p.closeInventory(); new ClanGui(plugin).openAll(p); }
+                case 13 -> { p.closeInventory(); new ClanGui(plugin).openInvites(p); }
+                case 14 -> openRanking(p);
+                case 15 -> { p.closeInventory(); new ClanGui(plugin).openAll(p); }
                 default -> { }
             }
             return;
@@ -200,7 +224,10 @@ public final class ClanFeatureListener implements Listener {
         if (title.startsWith("Clan de ")) {
             if (event.getRawSlot() == 20) {
                 Clan clan = plugin.clans().byPlayer(p.getUniqueId());
-                if (clan != null) { p.closeInventory(); openUpgrades(p); }
+                if (clan != null) {
+                    p.closeInventory();
+                    openUpgrades(p);
+                }
             }
             return;
         }
@@ -219,7 +246,21 @@ public final class ClanFeatureListener implements Listener {
         }
     }
 
-    @EventHandler public void onDrag(InventoryDragEvent event) { if (isFeatureGui(clean(event.getView().getTitle()))) event.setCancelled(true); }
-    private boolean isFeatureGui(String title) { return title.equals(clean(DASHBOARD)) || title.equals(clean(RANKING)) || title.equals(clean(UPGRADES)) || title.startsWith("Clan de ") || title.equals("ᴄʟᴀɴ • ᴘᴇʀғɪʟ"); }
-    private String roleName(ClanRole role) { if (role == null) return "Nenhum"; return switch (role) { case LEADER -> "Líder"; case MODERATOR -> "Moderador"; case MEMBER -> "Membro"; }; }
+    @EventHandler
+    public void onDrag(InventoryDragEvent event) {
+        if (isFeatureGui(clean(event.getView().getTitle()))) event.setCancelled(true);
+    }
+
+    private boolean isFeatureGui(String title) {
+        return title.equals(clean(DASHBOARD)) || title.equals(clean(RANKING)) || title.equals(clean(UPGRADES)) || title.startsWith("Clan de ") || title.equals("ᴄʟᴀɴ • ᴘᴇʀғɪʟ");
+    }
+
+    private String roleName(ClanRole role) {
+        if (role == null) return "Nenhum";
+        return switch (role) {
+            case LEADER -> "Líder";
+            case MODERATOR -> "Moderador";
+            case MEMBER -> "Membro";
+        };
+    }
 }
