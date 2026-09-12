@@ -4,6 +4,8 @@ main: com.donnie1337.clanplus.ClanPlus
 api-version: '26.2'
 author: donnie1337
 description: Sistema de clans para Spigot/Paper.
+softdepend:
+  - CargoPlus
 commands:
   clans:
     description: Abre o localizador de clans.
@@ -22,8 +24,8 @@ permissions:
       clanplus.clan: true
       clanplus.admin: true
   clanplus.clan:
-    description: Acesso aos comandos de clans.
+    description: Acesso aos comandos de clans. Concedida pelo CargoPlus aos cargos não administrativos.
     default: false
   clanplus.admin:
-    description: Acesso ao painel administrativo. Deve ser concedido somente ao cargo DEV.
+    description: Acesso ao painel administrativo. Concedida pelo CargoPlus exclusivamente ao cargo DEV.
     default: false
