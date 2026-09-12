@@ -7,6 +7,7 @@ import org.bukkit.ChatColor;
 import org.bukkit.Material;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
+import org.bukkit.event.Listener;
 import org.bukkit.event.entity.PlayerDeathEvent;
 import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.event.inventory.InventoryDragEvent;
@@ -46,7 +47,6 @@ public final class ClanListener implements Listener {
         String title = clean(e.getView().getTitle());
         if (title.startsWith("Baú da clan:")) return;
         e.setCancelled(true);
-
         if (title.equals("ᴄʟᴀɴ")) {
             switch (e.getRawSlot()) {
                 case 11 -> { if (plugin.clans().byPlayer(p.getUniqueId()) == null) startCreation(p); else { p.closeInventory(); p.performCommand("clan menu"); } }
@@ -59,7 +59,6 @@ public final class ClanListener implements Listener {
             }
             return;
         }
-
         if (title.equals("Convites recebidos")) {
             if (e.getRawSlot() == 49) { new ClanGui(plugin).openMain(p); return; }
             if (e.getRawSlot() < 0 || e.getRawSlot() >= e.getInventory().getSize()) return;
@@ -72,12 +71,10 @@ public final class ClanListener implements Listener {
             }
             return;
         }
-
         if (title.equals("Clans mais top") || title.equals("Clans do servidor") || title.equals("Ranking de KDR")) {
             if (e.getRawSlot() == 49) new ClanGui(plugin).openMain(p);
             return;
         }
-
         if (title.equals("Membros da clan")) {
             Clan c = plugin.clans().byPlayer(p.getUniqueId());
             if (c == null) { p.closeInventory(); return; }
@@ -98,7 +95,6 @@ public final class ClanListener implements Listener {
             Player online = Bukkit.getPlayer(target); if (online != null) online.sendMessage(plugin.msg("kicked-from-clan", "%name%", c.name()));
             new ClanGui(plugin).openMembers(p, c); return;
         }
-
         if (title.equals("Excluir clan")) {
             Clan c = plugin.clans().byPlayer(p.getUniqueId());
             if (c == null || !c.owner().equals(p.getUniqueId())) { p.closeInventory(); return; }
@@ -107,7 +103,6 @@ public final class ClanListener implements Listener {
             if (c.members().size() > 1) { p.sendMessage(plugin.msg("delete-requires-empty")); new ClanGui(plugin).openDelete(p, c); return; }
             String name = c.name(); plugin.clans().delete(c); p.closeInventory(); p.sendMessage(plugin.msg("deleted", "%name%", name)); return;
         }
-
         if (title.startsWith("Clan de ")) {
             Clan c = plugin.clans().byPlayer(p.getUniqueId());
             if (c == null) { p.closeInventory(); return; }
@@ -122,7 +117,6 @@ public final class ClanListener implements Listener {
             }
             return;
         }
-
         if (title.equals("Configuração da clan")) {
             Clan c = plugin.clans().byPlayer(p.getUniqueId());
             if (c == null || !c.role(p.getUniqueId()).canManage()) { p.closeInventory(); return; }
@@ -140,10 +134,7 @@ public final class ClanListener implements Listener {
     }
 
     private boolean isClanGui(String title) {
-        return title.equals("ᴄʟᴀɴ") || title.equals("Convites recebidos") ||
-                title.equals("Clans mais top") || title.equals("Clans do servidor") || title.equals("Ranking de KDR") ||
-                title.equals("Membros da clan") || title.equals("Excluir clan") || title.startsWith("Clan de ") ||
-                title.equals("Configuração da clan");
+        return title.equals("ᴄʟᴀɴ") || title.equals("Convites recebidos") || title.equals("Clans mais top") || title.equals("Clans do servidor") || title.equals("Ranking de KDR") || title.equals("Membros da clan") || title.equals("Excluir clan") || title.startsWith("Clan de ") || title.equals("Configuração da clan");
     }
 
     private void startCreation(Player p) {
@@ -159,7 +150,7 @@ public final class ClanListener implements Listener {
 
     private void sendCancelButton(Player p) {
         TextComponent component = new TextComponent(ChatColor.GRAY + "Clique " + ChatColor.RED + "AQUI" + ChatColor.GRAY + " para cancelar");
-        component.setClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, "/clan cancelar"));
+        component.setClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, "/trigger clanplus_cancel"));
         p.spigot().sendMessage(component);
     }
 
@@ -199,10 +190,17 @@ public final class ClanListener implements Listener {
     @EventHandler
     public void onCommand(PlayerCommandPreprocessEvent e) {
         String message = e.getMessage().trim();
+        Player p = e.getPlayer();
+        if (message.equalsIgnoreCase("/trigger clanplus_cancel")) {
+            if (createSteps.containsKey(p.getUniqueId()) && LoginPlusHook.isAuthenticated(p)) {
+                e.setCancelled(true);
+                cancelCreation(p);
+            }
+            return;
+        }
         if (!message.regionMatches(true, 0, "/clan", 0, 5)) return;
         String rest = message.length() > 5 ? message.substring(5) : "";
         if (!rest.isEmpty() && !Character.isWhitespace(rest.charAt(0))) return;
-        Player p = e.getPlayer();
         if (!LoginPlusHook.requireAuthentication(plugin, p)) {
             e.setCancelled(true);
             createSteps.remove(p.getUniqueId());
