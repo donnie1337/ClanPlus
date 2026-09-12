@@ -66,8 +66,7 @@ public final class ClanCommand implements CommandExecutor, TabCompleter {
     private void create(Player p, String[] a) {
         if (clan(p) != null) { send(p, "already-clan"); return; }
         if (a.length < 3) { send(p, "usage-create"); return; }
-        String name = a[1];
-        String tag = a[2];
+        String name = a[1]; String tag = a[2];
         int min = plugin.getConfig().getInt("clan.name-min-length", 3), max = plugin.getConfig().getInt("clan.name-max-length", 16);
         if (!name.matches("[A-Za-z0-9_\\-]+") || name.length() < min || name.length() > max) { p.sendMessage(title("&cNome inválido. Use " + min + "-" + max + " caracteres, letras, números, _ ou - .")); return; }
         if (!validTag(tag) || stripTagColors(tag).length() != 3) { p.sendMessage(plugin.msg("invalid-tag")); return; }
@@ -75,8 +74,21 @@ public final class ClanCommand implements CommandExecutor, TabCompleter {
         if (plugin.clans().tagTaken(stripTagColors(tag))) { p.sendMessage(title("&cEssa tag já está sendo usada.")); return; }
         Clan c = plugin.clans().create(name, tag, p.getUniqueId()); send(p, "created", "%name%", c.name(), "%tag%", c.tag());
     }
-    private void delete(Player p, Clan c) { if (c == null) { send(p, "no-clan"); return; } if (!leader(p,c)) { send(p,"only-leader"); return; } plugin.clans().delete(c); send(p,"deleted","%name%",c.name()); }
-    private void leave(Player p, Clan c) { if (c == null) { send(p,"no-clan"); return; } if (leader(p,c)) { if (c.members().size() > 1) p.sendMessage(title("&cTransfira a posse ou exclua a clan antes de sair.")); else { plugin.clans().delete(c); send(p,"deleted","%name%",c.name()); } return; } c.members().remove(p.getUniqueId()); plugin.clans().save(); send(p,"left"); }
+    private void delete(Player p, Clan c) {
+        if (c == null) { send(p, "no-clan"); return; }
+        if (!leader(p,c)) { send(p,"only-leader"); return; }
+        if (c.members().size() > 1) { send(p, "delete-requires-empty"); return; }
+        plugin.clans().delete(c); send(p,"deleted","%name%",c.name());
+    }
+    private void leave(Player p, Clan c) {
+        if (c == null) { send(p,"no-clan"); return; }
+        if (leader(p,c)) {
+            if (c.members().size() > 1) p.sendMessage(title("&cExpulse todos os outros membros antes de excluir a clan."));
+            else { plugin.clans().delete(c); send(p,"deleted","%name%",c.name()); }
+            return;
+        }
+        c.members().remove(p.getUniqueId()); plugin.clans().save(); send(p,"left");
+    }
     private void online(Player p, Clan c) { if (c == null) { send(p,"no-clan"); return; } p.sendMessage(title("&8&lᴄʟᴀɴ &8• &7Membros online: &f" + c.onlineCount())); c.members().keySet().stream().map(Bukkit::getPlayer).filter(x -> x != null).forEach(x -> p.sendMessage(title("&8• &f" + x.getName() + " &7(" + c.role(x.getUniqueId()).name().toLowerCase() + ")"))); }
     private Player target(String name) { return Bukkit.getPlayerExact(name); }
     private void kick(Player p, Clan c, String[] a) { if (!manager(p,c)) { send(p,"only-leader-mod"); return; } if (a.length < 2) { send(p,"usage-target"); return; } Player t=target(a[1]); if(t==null){send(p,"player-not-found");return;} if(!c.hasMember(t.getUniqueId())||t.getUniqueId().equals(c.owner())){p.sendMessage(title("&cJogador não pode ser expulso."));return;} if(!leader(p,c)&&c.role(t.getUniqueId())!=ClanRole.MEMBER){p.sendMessage(title("&cModeradores só podem expulsar membros."));return;} c.members().remove(t.getUniqueId()); plugin.clans().save(); send(p,"member-kicked","%player%",t.getName()); if(t.isOnline()) send(t,"member-kicked","%player%",p.getName()); }
@@ -98,5 +110,5 @@ public final class ClanCommand implements CommandExecutor, TabCompleter {
     public void openConfig(Player p,Clan c){if(!manager(p,c)){send(p,"only-leader-mod");return;}Inventory inv=Bukkit.createInventory(null,27,title(plugin.raw("config-title")));inv.setItem(11,item(c.friendlyFire()?Material.GREEN_WOOL:Material.RED_WOOL,"&ePvP entre membros: "+(c.friendlyFire()?"&aON":"&cOFF"),"&7Clique para alternar."));inv.setItem(15,item(Material.ARROW,"&cVoltar","&7Voltar ao menu."));p.openInventory(inv);}
     private void chest(Player p,Clan c){if(c==null){send(p,"no-clan");return;}boolean allowed=plugin.getConfig().getBoolean("clan.allow-member-chest",true);if(!allowed&&!manager(p,c)){send(p,"no-permission");return;}Inventory inv=Bukkit.createInventory(null,27,title(plugin.raw("chest-title","%name%",c.name())));inv.setContents(Arrays.copyOf(c.chest(),27));p.openInventory(inv);}
 
-    @Override public List<String> onTabComplete(CommandSender sender,Command command,String alias,String[] a){if(a.length==1)return Arrays.asList("menu","tag","config","info","criar","excluir","sair","online","expulsar","promover","rebaixar","transferir","convidar","convites","aceitar","recusar","chat","bau","sethome","home").stream().filter(x->x.startsWith(a[0].toLowerCase())).toList();if(a.length==2&&List.of("expulsar","promover","rebaixar","transferir","convidar").contains(a[0].toLowerCase()))return Bukkit.getOnlinePlayers().stream().map(Player::getName).filter(x->x.toLowerCase().startsWith(a[1].toLowerCase())).toList();return List.of();}
+    @Override public List<String> onTabComplete(CommandSender sender,Command command,String alias,String[] a){if(a.length==1)return Arrays.asList("menu","tag","config","info","criar","excluir","sair","online","expulsar","promover","rebaixar","transferir","convidar","convites","aceitar","recusar","chat","bau","sethome","home").stream().filter(x->x.startsWith(a[0].toLowerCase(Locale.ROOT))).toList();if(a.length==2&&List.of("expulsar","promover","rebaixar","transferir","convidar").contains(a[0].toLowerCase(Locale.ROOT))){Clan c=sender instanceof Player p?clan(p):null;return c==null?List.of():c.members().keySet().stream().map(Bukkit::getOfflinePlayer).map(OfflinePlayer::getName).filter(java.util.Objects::nonNull).filter(x->x.toLowerCase(Locale.ROOT).startsWith(a[1].toLowerCase(Locale.ROOT))).toList();}return List.of();}
 }
