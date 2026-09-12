@@ -39,7 +39,7 @@ menu-title: '&8Clan de %name%'
 locator-title: '&8Clans do servidor'
 chest-title: '&8Baú da clan: %name%'
 admin-title: '&8Painel administrativo'
-create-start: "&fCriação de clan iniciada!\n&8• &7Digite no chat o &fnome do seu clan&7.\n&8• &7Use entre &f%min% &7e &f%max% &7caracteres.\n&8• &7Permitidos: letras e números.\n&8• &7Clique &c&lAQUI &7para cancelar."
+create-start: "&fCriação de clan iniciada!\n&8• &7Digite no chat o &fnome do seu clan&7.\n&8• &7Use entre &f%min% &7e &f%max% &7caracteres.\n&8• &7Permitidos: letras e números."
 create-name-set: "&fNome definido!\n&8• &7Clan: &f%name%\n&8• &7Agora digite no chat a &fTAG &7do seu clan.\n&8• &7A TAG deve possuir exatamente &f3 letras MAIÚSCULAS&7.\n&8• &7Cores são permitidas, use &f/cores&7.\n&8• &7Exemplo: &fKDA"
 create-invalid-name: "&cNome inválido!\n&8• &7Use entre &f%min% &7e &f%max% &7caracteres.\n&8• &7Permitidos: letras, números, &f_ &7ou &f-."
 create-name-taken: "&cEsse nome já está sendo usado.\n&8• &7Escolha outro nome para sua clan."
