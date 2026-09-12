@@ -27,6 +27,7 @@ public final class ClanListener implements Listener {
     private enum CreateStep{NAME,TAG}
     public ClanListener(ClanPlus plugin){this.plugin=plugin;}
     private String clean(String s){return ChatColor.stripColor(s);}
+    private boolean isFeatureGui(String title){return title.equals("ᴄʟᴀɴ • ᴘᴀɪɴᴇʟ")||title.equals("ᴄʟᴀɴ • ᴜᴘɢʀᴀᴅᴇs")||title.equals("ᴄʟᴀɴ • ʀᴀɴᴋɪɴɢ")||title.equals("ᴄʟᴀɴ • ᴘᴇʀғɪʟ")||title.startsWith("Clan de ");}
 
     @EventHandler public void onDeath(PlayerDeathEvent e){Player victim=e.getEntity();if(LoginPlusHook.isAuthenticated(victim))plugin.clans().recordDeath(victim.getUniqueId());Player killer=victim.getKiller();if(killer!=null&&!killer.getUniqueId().equals(victim.getUniqueId())&&LoginPlusHook.isAuthenticated(killer))plugin.clans().recordKill(killer.getUniqueId());}
 
@@ -38,8 +39,9 @@ public final class ClanListener implements Listener {
             if(c==null||!top.equals(plugin.clanChest(c))||!LoginPlusHook.isAuthenticated(p)){e.setCancelled(true);return;}
             return;
         }
-        if(!LoginPlusHook.requireAuthentication(plugin,p)){e.setCancelled(true);p.closeInventory();return;}
         String title=clean(e.getView().getTitle());
+        if(isFeatureGui(title))return;
+        if(!LoginPlusHook.requireAuthentication(plugin,p)){e.setCancelled(true);p.closeInventory();return;}
         e.setCancelled(true);
         if(title.equals("ᴄʟᴀɴ")){switch(e.getRawSlot()){case 11->{if(plugin.clans().byPlayer(p.getUniqueId())==null)startCreation(p);else{p.closeInventory();p.performCommand("clan menu");}}case 13->new ClanGui(plugin).openInvites(p);case 14->new ClanGui(plugin).openTop(p);case 16->new ClanGui(plugin).openAll(p);case 22->new ClanGui(plugin).openKdr(p);case 26->p.closeInventory();default->{}}return;}
         if(title.equals("Convites recebidos")){
@@ -55,8 +57,8 @@ public final class ClanListener implements Listener {
         if(title.equals("Configuração da clan")){Clan c=plugin.clans().byPlayer(p.getUniqueId());if(c==null||c.role(p.getUniqueId())==null||!c.role(p.getUniqueId()).canManage()){p.closeInventory();return;}if(e.getRawSlot()==11){c.setFriendlyFire(!c.friendlyFire());plugin.clans().save();p.closeInventory();p.performCommand("clan config");}else if(e.getRawSlot()==15){p.closeInventory();p.performCommand("clan menu");}}
     }
 
-    @EventHandler public void onDrag(InventoryDragEvent e){Inventory top=e.getView().getTopInventory();if(plugin.isManagedClanChest(top))return;if(e.getWhoClicked() instanceof Player p){String title=clean(e.getView().getTitle());if(!LoginPlusHook.isAuthenticated(p)||isClanGui(title))e.setCancelled(true);}}
-    private boolean isClanGui(String title){return title.equals("ᴄʟᴀɴ")||title.equals("Convites recebidos")||title.equals("Clans mais top")||title.equals("Clans do servidor")||title.equals("Ranking de KDR")||title.equals("Membros da clan")||title.equals("Excluir clan")||title.startsWith("Clan de ")||title.equals("Configuração da clan");}
+    @EventHandler public void onDrag(InventoryDragEvent e){Inventory top=e.getView().getTopInventory();if(plugin.isManagedClanChest(top))return;if(e.getWhoClicked() instanceof Player p){String title=clean(e.getView().getTitle());if(!LoginPlusHook.isAuthenticated(p)||isClanGui(title)||isFeatureGui(title))e.setCancelled(true);}}
+    private boolean isClanGui(String title){return title.equals("ᴄʟᴀɴ")||title.equals("Convites recebidos")||title.equals("Clans mais top")||title.equals("Clans do servidor")||title.equals("Ranking de KDR")||title.equals("Membros da clan")||title.equals("Excluir clan")||title.equals("Configuração da clan");}
 
     private void startCreation(Player p){if(!LoginPlusHook.requireAuthentication(plugin,p))return;if(plugin.clans().byPlayer(p.getUniqueId())!=null){p.sendMessage(plugin.msg("already-clan"));return;}p.closeInventory();createSteps.put(p.getUniqueId(),CreateStep.NAME);createNames.remove(p.getUniqueId());int min=plugin.getConfig().getInt("clan.name-min-length",3),max=plugin.getConfig().getInt("clan.name-max-length",16);p.sendMessage(plugin.msg("create-start","%min%",String.valueOf(min),"%max%",String.valueOf(max)));sendCancelButton(p);}
     private void sendCancelButton(Player p){TextComponent component=new TextComponent(ChatColor.GRAY+"Clique "+ChatColor.RED+"AQUI"+ChatColor.GRAY+" para cancelar");component.setClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND,"/trigger clanplus_cancel"));p.spigot().sendMessage(component);p.sendMessage("");}
