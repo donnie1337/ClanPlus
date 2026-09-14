@@ -1,42 +1,70 @@
-# ╔══════════════════════════════════════════════════════════════╗
-# ║                         CLANPLUS                             ║
-# ║              Configuração do sistema de clans              ║
-# ╚══════════════════════════════════════════════════════════════╝
+# ============================================================
+# ClanPlus - Configuração do sistema de clãs
+# ============================================================
+# Os nomes técnicos das chaves são preservados para compatibilidade
+# com o código atual. Os comentários e a organização foram padronizados
+# em português sem alterar mensagens, permissões ou armazenamento.
+# ============================================================
 
+# ------------------------------------------------------------
+# CLÃ
+# ------------------------------------------------------------
 clan:
+  # Tamanho mínimo e máximo do nome do clã.
   name-min-length: 3
   name-max-length: 16
+  # Tamanho mínimo e máximo da tag do clã.
   tag-min-length: 3
   tag-max-length: 3
+  # Limite base de membros.
   max-members: 30
+  # Tempo de validade dos convites, em minutos.
   invite-expiration-minutes: 10
+  # Permite que membros utilizem o baú comunitário.
   allow-member-chest: true
+  # Permite que membros utilizem a home do clã.
   allow-member-home: true
+  # Exige que o jogador convidado esteja online.
   require-online-target-for-invite: true
 
+# ------------------------------------------------------------
+# PROGRESSÃO
+# ------------------------------------------------------------
 progression:
-  # XP base necessário por nível. O Clan ganha XP com abates e mortes.
+  # XP base necessário para cada nível.
   xp-per-level: 1000
-  # XP por abate de membro.
+  # XP recebido por abate de membro.
   kill-xp: 10
-  # XP por morte de membro.
+  # XP recebido por morte de membro.
   death-xp: 2
-  # Limite máximo de nível.
+  # Nível máximo do clã.
   max-level: 100
   upgrades:
-    # Cada nível adiciona +5 vagas ao limite base.
+    # Cada nível adiciona vagas ao limite base de membros.
     member-limit-max: 10
-    # Cada nível adiciona +10% de XP recebido por abates.
+    # Cada nível adiciona bônus de XP recebido por abates.
     xp-boost-max: 10
+    # Custo base das melhorias.
     base-cost: 500
 
+# ------------------------------------------------------------
+# MOEDAS
+# ------------------------------------------------------------
 coins:
+  # Placeholder econômico utilizado pelo sistema.
   placeholder: '%vault_eco_balance_fixed%'
 
+# ------------------------------------------------------------
+# ARMAZENAMENTO
+# ------------------------------------------------------------
 storage:
   file: clans.yml
-  # O ClanPlus mantém clans.yml.bak e grava primeiro em um arquivo temporário.
+  # Mantém backups e grava primeiro em arquivo temporário para segurança.
   safe-save: true
 
+# ------------------------------------------------------------
+# TELEPORTE
+# ------------------------------------------------------------
 teleport:
+  # Tempo de aquecimento da home do clã, em segundos.
   warmup-seconds: 3
