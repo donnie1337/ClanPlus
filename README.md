@@ -1,68 +1,113 @@
 # ClanPlus
 
-Sistema de clans para Spigot/Paper, inspirado na experiência do SimpleClans e desenvolvido para a API Spigot 26.2.
+O ClanPlus é o sistema de clans do meu servidor.
+
+A ideia é ter tudo pelo próprio menu, sem precisar ficar decorando um monte de comando. O jogador consegue criar a clan, administrar os membros, ver rankings, usar o baú e configurar a home pelo GUI.
 
 ## Menu principal
 
-- `/clan` — abre o GUI principal do sistema de clans.
-- `/clans` — abre o mesmo GUI principal.
-- O menu mostra o perfil do jogador com clan, cargo, coins, KDR, kills e mortes.
-- O menu possui atalhos para criação de clan, convites, clans do servidor, clans mais top e ranking de KDR.
+- `/clan` abre o menu principal.
+- `/clans` também abre o menu principal.
+- O menu mostra as informações do jogador.
+- Mostra clan, cargo, coins, KDR, kills e mortes.
+- Atalhos para criar clan, ver convites, clans do servidor, clans em destaque e ranking de KDR.
 
 ## Rankings
 
-- **Clans mais Top** — calculado pelo KDR médio dos jogadores que pertencem a cada clan.
-- **Ranking de KDR** — ranking individual dos jogadores com estatísticas registradas pelo ClanPlus.
-- KDR é calculado com base em kills e mortes registradas pelo plugin.
+### Clans mais Top
 
-## Tags
+O ranking das clans é calculado usando o KDR médio dos jogadores que fazem parte de cada clan.
 
-As tags dos clans devem ter **exatamente 3 letras MAIÚSCULAS**.
+### Ranking de KDR
 
-Exemplos válidos: `ABC`, `DON`, `XYZ`.
+Mostra os jogadores com as estatísticas registradas pelo ClanPlus.
 
-Números, símbolos, espaços e letras minúsculas não são aceitos.
+O KDR é calculado usando kills e mortes registradas pelo próprio plugin.
+
+## Tags das clans
+
+As tags precisam ter exatamente **3 letras maiúsculas**.
+
+Exemplos:
+
+- `ABC`
+- `DON`
+- `XYZ`
+
+Não são aceitos números, símbolos, espaços ou letras minúsculas na tag.
 
 ## Comandos
 
-- `/clanadmin` — abre o painel administrativo.
-- `/clan menu` — abre o menu da própria clan.
-- `/clan tag <TAG>` — altera a tag da clan.
-- `/clan config` — abre a configuração da clan.
-- `/clan info [clan]` — mostra informações.
-- `/clan criar <nome> <TAG>` — cria uma clan.
-- `/clan excluir` — exclui a clan.
-- `/clan sair` — sai da clan.
-- `/clan online` — mostra membros online.
-- `/clan expulsar <jogador>` — expulsa um membro.
-- `/clan promover <jogador>` — promove para moderador.
-- `/clan rebaixar <jogador>` — rebaixa para membro.
-- `/clan transferir <jogador>` — transfere a posse.
-- `/clan convidar <jogador>` — envia convite.
-- `/clan convites` — abre os convites recebidos.
-- `/clan aceitar <id>` — aceita um convite.
-- `/clan recusar <id>` — recusa um convite.
-- `/clan chat <mensagem>` — envia mensagem no chat da clan.
-- `/clan bau` — abre o baú comunitário.
-- `/clan sethome` — define a home.
-- `/clan home` — teleporta para a home.
+| Comando | O que faz |
+|---|---|
+| `/clan` | Abre o menu principal. |
+| `/clans` | Abre o menu principal. |
+| `/clanadmin` | Abre o painel administrativo. |
+| `/clan menu` | Abre o menu da própria clan. |
+| `/clan tag <TAG>` | Altera a tag da clan. |
+| `/clan config` | Abre as configurações da clan. |
+| `/clan info [clan]` | Mostra informações da clan. |
+| `/clan criar <nome> <TAG>` | Cria uma clan. |
+| `/clan excluir` | Exclui a clan. |
+| `/clan sair` | Sai da clan. |
+| `/clan online` | Mostra os membros online. |
+| `/clan expulsar <jogador>` | Expulsa um membro. |
+| `/clan promover <jogador>` | Promove um membro para moderador. |
+| `/clan rebaixar <jogador>` | Rebaixa um moderador para membro. |
+| `/clan transferir <jogador>` | Transfere a posse da clan. |
+| `/clan convidar <jogador>` | Envia convite para um jogador. |
+| `/clan convites` | Abre os convites recebidos. |
+| `/clan aceitar <id>` | Aceita um convite. |
+| `/clan recusar <id>` | Recusa um convite. |
+| `/clan chat <mensagem>` | Envia mensagem no chat da clan. |
+| `/clan bau` | Abre o baú comunitário. |
+| `/clan sethome` | Define a home da clan. |
+| `/clan home` | Teleporta para a home da clan. |
 
 ## Permissões
 
-A permissão raiz é `clanplus.*`.
+| Permissão | O que faz |
+|---|---|
+| `clanplus.clan` | Permite usar os comandos de jogador. |
+| `clanplus.admin` | Permite acessar o painel administrativo. |
+| `clanplus.*` | Dá acesso completo ao plugin. |
 
-- `clanplus.clan` — comandos de jogador.
-- `clanplus.admin` — painel administrativo.
-- `clanplus.*` — acesso completo.
+A permissão `clanplus.admin` é destinada ao cargo **DEV**. A permissão `clanplus.clan` fica para os demais jogadores que tiverem acesso ao sistema de clans.
 
 ## Armazenamento
 
-Os clans são persistidos em `plugins/ClanPlus/clans.yml`, incluindo membros, convites, home, configurações, conteúdo do baú comunitário e estatísticas de KDR.
+Os dados das clans ficam em:
+
+`plugins/ClanPlus/clans.yml`
+
+Ali ficam membros, convites, home, configurações, baú comunitário e estatísticas de KDR.
 
 ## Coins
 
-O GUI pode exibir o saldo através do PlaceholderAPI. O placeholder configurado por padrão é `%vault_eco_balance_fixed%`. Se PlaceholderAPI não estiver instalado ou o placeholder não estiver disponível, o GUI mostra `N/D`.
+O menu pode mostrar o saldo do jogador usando PlaceholderAPI.
+
+Por padrão é usado:
+
+`%vault_eco_balance_fixed%`
+
+Se o PlaceholderAPI ou o placeholder não estiver disponível, o menu mostra `N/D`.
 
 ## Configuração
 
-As mensagens ficam em `plugins/ClanPlus/messages.yml` e as regras principais em `config.yml`.
+As mensagens ficam em:
+
+`plugins/ClanPlus/messages.yml`
+
+As configurações principais ficam em:
+
+`plugins/ClanPlus/config.yml`
+
+## Plataforma
+
+- Java 26
+- Spigot API 26.2
+- Maven
+
+## Status
+
+O ClanPlus está em desenvolvimento. A ideia é deixar o sistema de clans completo pelo GUI e ir adicionando os recursos que fizerem sentido para o servidor sem deixar o jogador preso em comandos complicados.
