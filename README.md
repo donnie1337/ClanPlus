@@ -26,13 +26,15 @@ O KDR é calculado usando kills e mortes registradas pelo próprio plugin.
 
 ## Tags das clans
 
-As tags precisam ter exatamente **3 letras maiúsculas**.
+As tags precisam ter **3 letras maiúsculas** para jogadores comuns. O cargo **DEV** pode criar e alterar tags com até **5 letras maiúsculas**.
 
 Exemplos:
 
 - `ABC`
 - `DON`
 - `XYZ`
+
+Para DEV, também são aceitas tags como `DONNY` ou `ADMIN`.
 
 Não são aceitos números, símbolos, espaços ou letras minúsculas na tag.
 
