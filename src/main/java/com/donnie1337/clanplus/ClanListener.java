@@ -42,6 +42,7 @@ public final class ClanListener implements Listener {
         String title=clean(e.getView().getTitle());
         if(isFeatureGui(title))return;
         if(!LoginPlusHook.requireAuthentication(plugin,p)){e.setCancelled(true);p.closeInventory();return;}
+        if (!isClanGui(title)) return;
         e.setCancelled(true);
         if(title.equals("ᴄʟᴀɴ")){switch(e.getRawSlot()){case 11->{if(plugin.clans().byPlayer(p.getUniqueId())==null)startCreation(p);else{p.closeInventory();p.performCommand("clan menu");}}case 13->new ClanGui(plugin).openInvites(p);case 14->new ClanGui(plugin).openTop(p);case 16->new ClanGui(plugin).openAll(p);case 22->new ClanGui(plugin).openKdr(p);case 26->p.closeInventory();default->{}}return;}
         if(title.equals("Convites recebidos")){
